@@ -12,9 +12,6 @@ let cookieParser = require('cookie-parser');
 let bodyParser = require('body-parser');
 
 
-let mds = require('./service/MarketDataService');
-mds.populate(['NEBLBNB', 'IOSTBTC']);
-
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
@@ -45,5 +42,7 @@ app.use(function(err, req, res, next) {
   res.status(err.status || 500);
   res.render('error');
 });
+
+require('./service/MarketDataService');
 
 module.exports = app;

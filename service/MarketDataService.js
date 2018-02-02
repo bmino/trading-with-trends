@@ -2,14 +2,42 @@ const binance = require('node-binance-api');
 const MACD = require('technicalindicators').MACD;
 
 let MarketDataService = {
+    symbols: [],
+    tickers: [],
     candles: {},
 
-    populate: populate
+    populate: populate,
+    backfill: backfill
 };
 
 module.exports = MarketDataService;
 
+function init() {
+    return binance.exchangeInfo((error, data) => {
+        let symbols = [];
+        let tickers = [];
+
+        data.symbols.map(obj => {
+            if (obj.status !== 'TRADING') return;
+            symbols.push(obj.baseAsset);
+            tickers.push(obj.symbol);
+        });
+
+        MarketDataService.tickers = tickers;
+        MarketDataService.symbols = symbols.filter((sym, index, self) => {
+            return self.indexOf(sym) === index;
+        });
+
+        console.log(MarketDataService.symbols);
+        console.log(`Found ${MarketDataService.symbols.length} symbols`);
+        console.log(`Found ${MarketDataService.tickers.length} tickers`);
+    });
+}
+
+init();
+
 function populate(tickers, interval='1m') {
+    if (typeof tickers === 'string') tickers = [tickers];
     console.log('Populating candlesticks cache for ' + tickers);
 
     tickers.forEach(clearCandles);
