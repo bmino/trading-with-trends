@@ -43,6 +43,6 @@ app.use(function(err, req, res, next) {
   res.render('error');
 });
 
-require('./service/MarketDataService');
+require('./src/main/service/MarketDataService');
 
 module.exports = app;
