@@ -55,8 +55,6 @@ function processTick(tick) {
     let { E:eventTime, s:ticker, k:candle } = tick;
     let interval = candle.i;
 
-    console.log(`Received ${ticker} candlesticks tick`);
-
     candle = {
         time: eventTime,
         ticker: ticker,
@@ -72,17 +70,21 @@ function processTick(tick) {
     if (containsNoCandles(ticker)) {
         // First tick update
         MarketDataService.candles[ticker].push(candle);
-        backfill(ticker, interval, eventTime, 30);
+        backfill(ticker, interval, eventTime, 500);
     } else if (getLastCandle(ticker).final) {
         // Need to create new candle
+        console.log(`Received final ${ticker} candlesticks tick`);
         MarketDataService.candles[ticker].push(candle);
+        if (EntryPointService.current(MarketDataService.candles[ticker])) {
+            console.log(`Would enter into ${ticker} at ${eventTime}`);
+        }
     } else {
         // Update the most recent candle
         overrideLastCandle(ticker, candle);
     }
 }
 
-function backfill(ticker, interval, endTime, limit=10) {
+function backfill(ticker, interval, endTime, limit=500) {
     console.log(`Back filling ${limit} candlesticks for ${ticker} ...`);
 
     return getCandleHistory(ticker, interval, endTime, limit)
@@ -96,14 +98,13 @@ function backfill(ticker, interval, endTime, limit=10) {
 
             addCandlesToBeginning(ticker, candles);
             console.log(`Back filled ${candles.length} ${ticker} candles`);
-            EntryPointService.checkEntry(MarketDataService.candles[ticker]);
 
             return candles;
         })
         .catch(console.error);
 }
 
-function getCandleHistory(ticker, interval, endTime, limit) {
+function getCandleHistory(ticker, interval, endTime, limit=500) {
     return new Promise((resolve, reject) => {
         let options = {
             limit: limit,

@@ -21,6 +21,8 @@ function current(candles) {
 function historical(candles) {
     console.log(`Calculating entry points for ${candles[0].ticker} from ${new Date(candles[0].time)} - ${new Date(candles[candles.length-1].time)}`);
     let crossovers = calculateCrossovers(candles);
+    console.log(`Found ${crossovers.length} favorable MACD crossovers\n`);
+
     let historyEntryCrossovers = [];
     crossovers.forEach((crossover, index) => {
         if (shouldEnterFromCrossovers(crossovers, index)) {
@@ -61,12 +63,6 @@ function calculateCrossovers(candlesticks) {
         signalPeriod: 3
     });
 
-    console.log(`Candles: ${candlesticks.length}`);
-    console.log(`Found ${calculatedMACD.length} MACD calculations`);
-    console.log(`Found ${calculatedRSI.length} RSI calculations`);
-    console.log(`Found ${calculatedSTOCH.length} STOCH calculations`);
-
-
     for (let offset=0; offset<candlesticks.length; offset++) {
         let currentCandlestick = candlesticks[candlesticks.length - 1 - offset];
         let currentMACD = calculatedMACD[calculatedMACD.length - 1 - offset];
@@ -84,7 +80,6 @@ function calculateCrossovers(candlesticks) {
         }
     }
 
-    console.log(`Found ${crossoverObjects.length} favorable MACD crossovers\n`);
     return crossoverObjects;
 }
 

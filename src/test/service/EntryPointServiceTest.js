@@ -3,7 +3,7 @@ const MarketDataService = require('../../main/service/MarketDataService');
 
 let ticker = 'BTCUSDT';
 let interval = '1m';
-let endDate = new Date(2018, 1, 6, 23, 59, 0, 0);
+let endDate = new Date(2018, 1, 12, 17, 0, 0, 0);
 let limit = 500;
 
 MarketDataService.getCandleHistory(ticker, interval, endDate, limit)
