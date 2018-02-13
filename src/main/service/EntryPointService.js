@@ -25,9 +25,11 @@ function historical(candles) {
 
     let historyEntryCrossovers = [];
     crossovers.forEach((crossover, index) => {
+        console.log(`Checking crossover at ${new Date(crossovers[index].time).toString()}`);
         if (shouldEnterFromCrossovers(crossovers, index)) {
             historyEntryCrossovers.push(crossover);
         }
+        console.log();
     });
     console.log(`\nFound ${historyEntryCrossovers.length} historical entry points`);
     console.log(historyEntryCrossovers.map((crossover) => {return new Date(crossover.time).toString();}));
@@ -84,10 +86,8 @@ function calculateCrossovers(candlesticks) {
 }
 
 function shouldEnterFromCrossovers(crossovers, crossoverReference=crossovers.length-1) {
-    console.log(`Found favorable MACD crossover`);
-
     if (!crossovers || crossovers.length <= 1) {
-        console.log(`No previous crossovers found to compare against`);
+        console.log(`No previous crossover found to compare against`);
         return false;
     }
     if (crossoverReference < 1 || crossoverReference > crossovers.length) {
@@ -105,7 +105,7 @@ function shouldEnterFromCrossovers(crossovers, crossoverReference=crossovers.len
         console.log(`STOCH didn\'t meet criteria, k:${currentCrossover.stoch.k} d:${currentCrossover.stoch.d}`);
         return false;
     }
-    console.log('Met all entry criteria');
+    console.log('Met all entry criteria for crossover!');
     return true;
 }
 
