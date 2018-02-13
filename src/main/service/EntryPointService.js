@@ -84,6 +84,8 @@ function calculateCrossovers(candlesticks) {
 }
 
 function shouldEnterFromCrossovers(crossovers, crossoverReference=crossovers.length-1) {
+    console.log(`Found favorable MACD crossover`);
+
     if (!crossovers || crossovers.length <= 1) {
         console.log(`No previous crossovers found to compare against`);
         return false;

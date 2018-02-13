@@ -76,7 +76,7 @@ function processTick(tick) {
         console.log(`Received final ${ticker} candlesticks tick`);
         MarketDataService.candles[ticker].push(candle);
         if (EntryPointService.current(MarketDataService.candles[ticker])) {
-            console.log(`Would enter into ${ticker} at ${eventTime}`);
+            console.log(`Would enter into ${ticker} at ${new Date(eventTime).toString()}`);
         }
     } else {
         // Update the most recent candle
