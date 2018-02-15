@@ -1,9 +1,7 @@
 const MarketDataService = require('../main/service/MarketDataService');
-
-let tickers = ['BTCUSDT', 'ETHUSDT'];
-let interval = '1m';
+const config = require('../../config/manual/monitorLive');
 
 MarketDataService.init()
     .then(() => {
-        MarketDataService.watch(tickers, interval);
+        MarketDataService.watch(config.tickers, config.interval);
     });
