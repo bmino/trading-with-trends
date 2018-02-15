@@ -29,3 +29,6 @@ node_modules
 
 # IntelliJ
 .idea
+
+# Configuration
+config/manual
