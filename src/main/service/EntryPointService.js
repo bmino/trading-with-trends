@@ -9,7 +9,7 @@ let EntryPointService = {
 module.exports = EntryPointService;
 
 function current(candles) {
-    return calculateCrossovers(candles)
+    return calculatePositiveCrossovers(candles)
         .then((crossovers) => {
             let recentCrossover = crossovers[crossovers.length-1];
             let recentCandle = candles[candles.length-1];
@@ -20,7 +20,7 @@ function current(candles) {
 
 function historical(candles) {
     console.log(`Calculating entry points for ${candles[0].ticker} from ${new Date(candles[0].time)} - ${new Date(candles[candles.length-1].time)}`);
-    return calculateCrossovers(candles)
+    return calculatePositiveCrossovers(candles)
         .then((crossovers) => {
             console.log(`Found ${crossovers.length} MACD crossovers\n`);
 
@@ -38,7 +38,7 @@ function historical(candles) {
         });
 }
 
-function calculateCrossovers(candlesticks) {
+function calculatePositiveCrossovers(candlesticks) {
     let closeValues = candlesticks.map((candle) => {return candle.close;});
     let lowValues = candlesticks.map((candle) => {return candle.low;});
     let highValues = candlesticks.map((candle) => {return candle.high;});
@@ -75,12 +75,12 @@ function calculateCrossovers(candlesticks) {
                 let previousMACD = calculatedMACD[calculatedMACD.length - 1 - 1 - offset];
                 let currentRSI = calculatedRSI[calculatedRSI.length - 1 - offset];
                 let currentSTOCH = calculatedSTOCH[calculatedSTOCH.length - 1 - offset];
-                if (currentMACD === undefined) continue;
-                if (previousMACD === undefined) continue;
+                if (currentMACD === undefined || currentMACD.histogram === undefined) continue;
+                if (previousMACD === undefined || previousMACD.histogram === undefined) continue;
                 if (currentRSI === undefined) continue;
                 if (currentSTOCH === undefined) continue;
 
-                if (currentMACD.cross !== undefined) {
+                if (currentMACD.cross !== undefined && previousMACD.histogram < 0 && currentMACD.histogram >= 0) {
                     crossoverObjects = [new CrossoverObject(currentCandlestick.ticker, currentCandlestick.time, currentMACD, currentRSI, currentSTOCH)].concat(crossoverObjects);
                 }
             }
