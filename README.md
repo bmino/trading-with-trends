@@ -4,6 +4,7 @@ Entry Point
 
 MACD is (12, 26, close, 14)
 STOCH is (14, 3, 3)
+RSI is (10)
 "crossover" is defined where the 12x MACD crosses up through the 26x MACD
 
 1) MACD crossover occurred
