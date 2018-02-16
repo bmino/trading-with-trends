@@ -1,6 +1,4 @@
-const MACD = require('technicalindicators').MACD;
-const RSI = require('technicalindicators').RSI;
-const STOCH = require('technicalindicators').Stochastic;
+const TechnicalAnalysisService = require('./TechnicalAnalysisService');
 const CrossoverObject = require('../object/CrossoverObject');
 
 let EntryPointService = {
@@ -11,29 +9,33 @@ let EntryPointService = {
 module.exports = EntryPointService;
 
 function current(candles) {
-    let crossovers = calculateCrossovers(candles);
-    let recentCrossover = crossovers[crossovers.length-1];
-    let recentCandle = candles[candles.length-1];
-    if (recentCrossover.time !== recentCandle.time) return false;
-    return shouldEnterFromCrossovers(crossovers);
+    return calculateCrossovers(candles)
+        .then((crossovers) => {
+            let recentCrossover = crossovers[crossovers.length-1];
+            let recentCandle = candles[candles.length-1];
+            if (recentCrossover.time !== recentCandle.time) return false;
+            return shouldEnterFromCrossovers(crossovers);
+        });
 }
 
 function historical(candles) {
     console.log(`Calculating entry points for ${candles[0].ticker} from ${new Date(candles[0].time)} - ${new Date(candles[candles.length-1].time)}`);
-    let crossovers = calculateCrossovers(candles);
-    console.log(`Found ${crossovers.length} favorable MACD crossovers\n`);
+    return calculateCrossovers(candles)
+        .then((crossovers) => {
+            console.log(`Found ${crossovers.length} MACD crossovers\n`);
 
-    let historyEntryCrossovers = [];
-    crossovers.forEach((crossover, index) => {
-        console.log(`Checking crossover at ${new Date(crossovers[index].time).toString()}`);
-        if (shouldEnterFromCrossovers(crossovers, index)) {
-            historyEntryCrossovers.push(crossover);
-        }
-        console.log();
-    });
-    console.log(`\nFound ${historyEntryCrossovers.length} historical entry points`);
-    console.log(historyEntryCrossovers.map((crossover) => {return new Date(crossover.time).toString();}));
-    return historyEntryCrossovers;
+            let historyEntryCrossovers = [];
+            crossovers.forEach((crossover, index) => {
+                console.log(`Checking crossover at ${new Date(crossovers[index].time).toString()}`);
+                if (shouldEnterFromCrossovers(crossovers, index)) {
+                    historyEntryCrossovers.push(crossover);
+                }
+                console.log();
+            });
+            console.log(`\nFound ${historyEntryCrossovers.length} historical entry points`);
+            console.log(historyEntryCrossovers.map((crossover) => {return new Date(crossover.time).toString();}));
+            return historyEntryCrossovers;
+        });
 }
 
 function calculateCrossovers(candlesticks) {
@@ -42,47 +44,51 @@ function calculateCrossovers(candlesticks) {
     let highValues = candlesticks.map((candle) => {return candle.high;});
 
     let crossoverObjects = [];
+    let calculationPromises = [];
 
-    let calculatedMACD = MACD.calculate({
-        values            : closeValues,
-        fastPeriod        : 12,
-        slowPeriod        : 26,
-        signalPeriod      : 14,
-        SimpleMAOscillator: false,
-        SimpleMASignal    : false
-    });
+    calculationPromises.push(TechnicalAnalysisService.calculateMACD({
+        values: closeValues,
+        fast: 12,
+        slow: 26,
+        signal: 14
+    }));
+    calculationPromises.push(TechnicalAnalysisService.calculateRSI({
+        values: closeValues,
+        period: 10
+    }));
+    calculationPromises.push(TechnicalAnalysisService.calculateSTOCH({
+        highValues: highValues,
+        lowValues: lowValues,
+        closeValues: closeValues,
+        k: 14,
+        slowing: 3,
+        d: 3
+    }));
 
-    let calculatedRSI = RSI.calculate({
-        values : closeValues,
-        period : 10
-    });
+    return Promise.all(calculationPromises)
+        .then((results) => {
+            let [calculatedMACD, calculatedRSI, calculatedSTOCH] = results;
 
-    let calculatedSTOCH = STOCH.calculate({
-        high: highValues,
-        low: lowValues,
-        close: closeValues,
-        period: 14,
-        signalPeriod: 3
-    });
+            for (let offset=0; offset<candlesticks.length; offset++) {
+                let currentCandlestick = candlesticks[candlesticks.length - 1 - offset];
+                let currentMACD = calculatedMACD[calculatedMACD.length - 1 - offset];
+                let previousMACD = calculatedMACD[calculatedMACD.length - 1 - 1 - offset];
+                let currentRSI = calculatedRSI[calculatedRSI.length - 1 - offset];
+                let currentSTOCH = calculatedSTOCH[calculatedSTOCH.length - 1 - offset];
+                if (currentMACD === undefined) continue;
+                if (previousMACD === undefined) continue;
+                if (currentRSI === undefined) continue;
+                if (currentSTOCH === undefined) continue;
 
-    for (let offset=0; offset<candlesticks.length; offset++) {
-        let currentCandlestick = candlesticks[candlesticks.length - 1 - offset];
-        let currentMACD = calculatedMACD[calculatedMACD.length - 1 - offset];
-        let previousMACD = calculatedMACD[calculatedMACD.length - 1 - 1 - offset];
-        let currentRSI = calculatedRSI[calculatedRSI.length - 1 - offset];
-        let currentSTOCH = calculatedSTOCH[calculatedSTOCH.length - 1 - offset];
-        if (!currentMACD || currentMACD.histogram === undefined) continue;
-        if (!previousMACD || previousMACD.histogram === undefined) continue;
-        if (currentRSI === undefined) continue;
-        if (currentSTOCH === undefined) continue;
-
-        if (previousMACD.histogram < 0 && currentMACD.histogram >= 0) {
-            // Favorable crossover occurred
-            crossoverObjects = [new CrossoverObject(currentCandlestick.ticker, currentCandlestick.time, currentMACD, currentRSI, currentSTOCH)].concat(crossoverObjects);
-        }
-    }
-
-    return crossoverObjects;
+                if (currentMACD.cross !== undefined) {
+                    crossoverObjects = [new CrossoverObject(currentCandlestick.ticker, currentCandlestick.time, currentMACD, currentRSI, currentSTOCH)].concat(crossoverObjects);
+                }
+            }
+            return crossoverObjects;
+        })
+        .catch((error) => {
+            throw error;
+        });
 }
 
 function shouldEnterFromCrossovers(crossovers, crossoverReference=crossovers.length-1) {
@@ -95,30 +101,49 @@ function shouldEnterFromCrossovers(crossovers, crossoverReference=crossovers.len
         return false;
     }
 
-    let currentCrossover = crossovers[crossoverReference];
-    let previousCrossover = crossovers[crossoverReference-1];
-    if (!verifyRSI(previousCrossover, currentCrossover)) {
-        console.log(`RSI didn\'t meet criteria, ${previousCrossover.rsi} -> ${currentCrossover.rsi}`);
+    try {
+        let currentCrossover = crossovers[crossoverReference];
+        let previousCrossover = crossovers[crossoverReference-1];
+        verifyMACD(previousCrossover, currentCrossover);
+        verifyRSI(previousCrossover, currentCrossover);
+        verifySTOCH(currentCrossover);
+    } catch (customError) {
+        console.log(customError);
         return false;
     }
-    if (!verifySTOCH(currentCrossover)) {
-        console.log(`STOCH didn\'t meet criteria, k:${currentCrossover.stoch.k} d:${currentCrossover.stoch.d}`);
-        return false;
-    }
+
     console.log('Met all entry criteria for crossover!');
     return true;
 }
 
+
+function verifyMACD(previousCrossover, currentCrossover) {
+    if (!(currentCrossover.macd.cross > previousCrossover.macd.cross)) {
+       throw `MACD crossover wasn\'t higher than previous crossover, ${previousCrossover.macd.cross} -> ${currentCrossover.macd.cross}`;
+    }
+    if (!(previousCrossover.macd.histogram < 0 && currentCrossover.macd.histogram >= 0)) {
+        throw `MACD crossover wasn\'t crossing upwards, ${previousCrossover.macd.histogram} -> ${currentCrossover.macd.histogram}`;
+    }
+}
+
 function verifyRSI(previousCrossover, currentCrossover) {
-    return currentCrossover.rsi > previousCrossover.rsi &&
-            currentCrossover.rsi > 50;
+    if (!(currentCrossover.rsi > previousCrossover.rsi)) {
+        throw `RSI wasn\'t higher than the previous crossover, ${previousCrossover.rsi} -> ${currentCrossover.rsi}`;
+    }
+    if (!(currentCrossover.rsi > 50)) {
+        throw `RIS wasn\'t above 50, ${currentCrossover.rsi}`;
+    }
 }
 
 function verifySTOCH(currentCrossover) {
-    return currentCrossover.stoch.k > currentCrossover.stoch.d &&
-        !(inRange(currentCrossover.stoch.k, 90, 99) && inRange(currentCrossover.stoch.d, 90, 99)) &&
-        !(inRange(currentCrossover.stoch.k, 80, 89) && inRange(currentCrossover.stoch.d, 80, 89)) &&
-        !(inRange(currentCrossover.stoch.k, 80, 84) && inRange(currentCrossover.stoch.d, 70, 79));
+    if (!(currentCrossover.stoch.k > currentCrossover.stoch.d)) {
+        throw `STOCH wasn\'t favorable, k:${currentCrossover.stoch.k} d:${currentCrossover.stoch.d}`;
+    }
+    if ((inRange(currentCrossover.stoch.k, 90, 99) && inRange(currentCrossover.stoch.d, 90, 99)) ||
+        (inRange(currentCrossover.stoch.k, 80, 89) && inRange(currentCrossover.stoch.d, 80, 89)) ||
+        (inRange(currentCrossover.stoch.k, 80, 84) && inRange(currentCrossover.stoch.d, 70, 79))) {
+        throw `STOCH falls within blacklisted ranges, k:${currentCrossover.stoch.k} d:${currentCrossover.stoch.d}`;
+    }
 }
 
 function inRange(number, low, high) {

@@ -26,7 +26,6 @@
     "node-binance-api": "^0.4.6",
     "serve-favicon": "~2.4.5",
     "socket.io": "^2.0.4",
-    "technicalindicators": "^1.1.1"
     "tulind": "^0.8.9"
   }
 }
