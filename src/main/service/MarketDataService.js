@@ -105,44 +105,32 @@ function backfill(ticker, interval, endTime, limit=500) {
 }
 
 function getCandleHistory(ticker, interval, endTime, limit=500) {
-    let promises = [];
-    while (limit > 0) {
-        let candlesPromise = new Promise((resolve, reject) => {
-            let options = {
-                limit: limit,
-                endTime: typeof endTime === 'number' ? endTime : endTime.getTime()
-            };
+    return new Promise((resolve, reject) => {
+        let options = {
+            limit: limit,
+            endTime: typeof endTime === 'number' ? endTime : endTime.getTime()
+        };
 
-            binance.candlesticks(ticker, interval, (error, ticks, symbol) => {
-                if (error) return reject(error);
-                let candles = ticks.map(tick => {
-                    let [time, open, high, low, close, volume, closeTime, assetVolume, trades, buyBaseVolume, buyAssetVolume, ignored] = tick;
-                    return {
-                        time: time,
-                        ticker: symbol,
-                        open: parseFloat(open),
-                        high: parseFloat(high),
-                        low: parseFloat(low),
-                        close: parseFloat(close),
-                        volume: parseFloat(volume),
-                        trades: trades,
-                        final: true,
-                        backfilled: true
-                    };
-                });
-                return resolve(candles);
-            }, options);
-        });
-        promises.push(candlesPromise);
-        limit -= 500;
-    }
-    return Promise.all(promises)
-        .then((candleChunks) => {
-            return candleChunks.reduce((a,b) => {
-                return a.concat(b);
+        binance.candlesticks(ticker, interval, (error, ticks, symbol) => {
+            if (error) return reject(error);
+            let candles = ticks.map(tick => {
+                let [time, open, high, low, close, volume, closeTime, assetVolume, trades, buyBaseVolume, buyAssetVolume, ignored] = tick;
+                return {
+                    time: time,
+                    ticker: symbol,
+                    open: parseFloat(open),
+                    high: parseFloat(high),
+                    low: parseFloat(low),
+                    close: parseFloat(close),
+                    volume: parseFloat(volume),
+                    trades: trades,
+                    final: true,
+                    backfilled: true
+                };
             });
-        })
-        .catch(console.error);
+            return resolve(candles);
+        }, options);
+    });
 }
 
 function clearCandles(ticker) {
