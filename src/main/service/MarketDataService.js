@@ -77,18 +77,11 @@ function backfill(ticker, interval, endTime, limit=500) {
     console.log(`Back filling ${limit} candlesticks for ${ticker} ...`);
 
     return getCandleHistory(ticker, interval, endTime, limit)
-        .then((candles) => {
-            let mostRecentBackfilledCandleTime = candles[candles.length - 1].time;
-            let earliestExistingCandleTime = MarketDataService.candles[ticker][0].time;
-            if (mostRecentBackfilledCandleTime >= earliestExistingCandleTime) {
-                console.log(`Removing duplicate data for ${ticker}`);
-                removeCandle(ticker, 0);
-            }
-
-            addCandlesToBeginning(ticker, candles);
-            console.log(`Back filled ${candles.length} ${ticker} candles`);
-
-            return candles;
+        .then((backfilledCandles) => {
+            backfilledCandles = removeOutdatedCandles(backfilledCandles);
+            addCandlesToBeginning(ticker, backfilledCandles);
+            console.log(`Back filled ${backfilledCandles.length} ${ticker} candles`);
+            return backfilledCandles;
         })
         .catch(console.error);
 }
@@ -127,8 +120,10 @@ function addCandle(ticker, candle) {
     MarketDataService.candles[ticker].push(candle);
 }
 
-function removeCandle(ticker, index) {
-    MarketDataService.candles[ticker].splice(MarketDataService.candles[ticker].indexOf(MarketDataService.candles[ticker][index]), 1);
+function removeOutdatedCandles(candlesToFilter) {
+    return candlesToFilter.filter((candle) => {
+        return candle.time < MarketDataService.candles[candle.ticker][0].time;
+    });
 }
 
 function overrideLastCandle(ticker, candle) {
