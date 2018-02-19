@@ -86,20 +86,25 @@ function backfill(ticker, interval, endTime, limit=500) {
         .catch(console.error);
 }
 
-function getCandleHistory(ticker, interval, endTime, limit=500) {
+function getCandleHistory(ticker, interval, endTime, limit=500, candleShelf=[]) {
+    if (limit <= 0) return Promise.resolve(candleShelf);
+
     return new Promise((resolve, reject) => {
         let options = {
-            limit: limit,
+            limit: limit > 500 ? 500 : limit,
             endTime: typeof endTime === 'number' ? endTime : endTime.getTime()
         };
 
+        console.log(`Looking up candlesticks ${options.limit} intervals before ${new Date(endTime).toString()}`);
         binance.candlesticks(ticker, interval, (error, ticks, symbol) => {
             if (error) return reject(error);
-            let candles = ticks.map(tick => {
+            candleShelf = ticks.map(tick => {
                 let [time, open, high, low, close, volume, closeTime, assetVolume, trades, buyBaseVolume, buyAssetVolume, ignored] = tick;
                 return new Candlestick(symbol, time, open, close, high, low, volume, trades, true, true);
-            });
-            return resolve(candles);
+            }).concat(candleShelf);
+            return getCandleHistory(ticker, interval, candleShelf[0].time-1, limit-=500, candleShelf)
+                .then(resolve)
+                .catch(reject);
         }, options);
     });
 }
