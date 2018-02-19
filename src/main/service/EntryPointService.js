@@ -15,6 +15,9 @@ function current(candles) {
             let recentCandle = candles[candles.length-1];
             if (recentCrossover.time !== recentCandle.time) return false;
             return shouldEnterFromCrossovers(crossovers);
+        })
+        .then((result) => {
+            if (result) console.log(`Would enter into ${candles[0].ticker} at ${new Date().toString()}`);
         });
 }
 

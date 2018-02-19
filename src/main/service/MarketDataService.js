@@ -1,5 +1,6 @@
 const binance = require('node-binance-api');
 const EntryPointService = require('./EntryPointService');
+const Candlestick = require('../object/Candlestick');
 
 let MarketDataService = {
     symbols: [],
@@ -53,32 +54,19 @@ function watch(tickers, interval='1m') {
 
 function processTick(tick) {
     let { E:eventTime, s:ticker, k:candle } = tick;
-    let interval = candle.i;
+    let { o:open, c:close, h:high, l:low, y:volume, n:trades, x:final, i:interval } = candle;
 
-    candle = {
-        time: eventTime,
-        ticker: ticker,
-        open: parseFloat(candle.o),
-        close: parseFloat(candle.c),
-        high: parseFloat(candle.h),
-        low: parseFloat(candle.l),
-        volume: parseFloat(candle.v),
-        trades: candle.n,
-        final: candle.x
-    };
+    candle = new Candlestick(ticker, eventTime, open, close, high, low, volume, trades, final);
 
     if (containsNoCandles(ticker)) {
         // First tick update
-        MarketDataService.candles[ticker].push(candle);
+        addCandle(ticker, candle);
         backfill(ticker, interval, eventTime, 500);
     } else if (getLastCandle(ticker).final) {
         // Need to create new candle
         console.log(`Received final ${ticker} candlesticks tick`);
-        MarketDataService.candles[ticker].push(candle);
-        EntryPointService.current(MarketDataService.candles[ticker])
-            .then((result) => {
-                if (result) console.log(`Would enter into ${ticker} at ${new Date(eventTime).toString()}`);
-            });
+        addCandle(ticker, candle);
+        EntryPointService.current(MarketDataService.candles[ticker]);
     } else {
         // Update the most recent candle
         overrideLastCandle(ticker, candle);
@@ -116,18 +104,7 @@ function getCandleHistory(ticker, interval, endTime, limit=500) {
             if (error) return reject(error);
             let candles = ticks.map(tick => {
                 let [time, open, high, low, close, volume, closeTime, assetVolume, trades, buyBaseVolume, buyAssetVolume, ignored] = tick;
-                return {
-                    time: time,
-                    ticker: symbol,
-                    open: parseFloat(open),
-                    high: parseFloat(high),
-                    low: parseFloat(low),
-                    close: parseFloat(close),
-                    volume: parseFloat(volume),
-                    trades: trades,
-                    final: true,
-                    backfilled: true
-                };
+                return new Candlestick(symbol, time, open, close, high, low, volume, trades, true, true);
             });
             return resolve(candles);
         }, options);
@@ -144,6 +121,10 @@ function containsNoCandles(ticker) {
 
 function getLastCandle(ticker) {
     return MarketDataService.candles[ticker][MarketDataService.candles[ticker].length - 1];
+}
+
+function addCandle(ticker, candle) {
+    MarketDataService.candles[ticker].push(candle);
 }
 
 function removeCandle(ticker, index) {
