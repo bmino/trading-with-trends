@@ -25,15 +25,14 @@ function historical(candles) {
     console.log(`Calculating entry points for ${candles[0].ticker} from ${new Date(candles[0].time)} - ${new Date(candles[candles.length-1].time)}`);
     return calculatePositiveCrossovers(candles)
         .then((crossovers) => {
-            console.log(`Found ${crossovers.length} MACD crossovers\n`);
+            console.log(`Found ${crossovers.length} MACD crossovers`);
 
             let historyEntryCrossovers = [];
             crossovers.forEach((crossover, index) => {
-                console.log(`Checking crossover at ${new Date(crossovers[index].time).toString()}`);
+                console.log(`\nChecking crossover at ${new Date(crossovers[index].time).toString()}`);
                 if (shouldEnterFromCrossovers(crossovers, index)) {
                     historyEntryCrossovers.push(crossover);
                 }
-                console.log();
             });
             console.log(`\nFound ${historyEntryCrossovers.length} historical entry points`);
             console.log(historyEntryCrossovers.map((crossover) => {return new Date(crossover.time).toString();}));
@@ -95,11 +94,11 @@ function calculatePositiveCrossovers(candlesticks) {
 }
 
 function shouldEnterFromCrossovers(crossovers, crossoverReference=crossovers.length-1) {
-    if (!crossovers || crossovers.length <= 1) {
+    if (!crossovers || crossovers.length <= 1 || crossoverReference === 0) {
         console.log(`No previous crossover found to compare against`);
         return false;
     }
-    if (crossoverReference < 1 || crossoverReference > crossovers.length) {
+    if (crossoverReference < 0 || crossoverReference >= crossovers.length) {
         console.log(`Crossover reference of ${crossoverReference} is invalid`);
         return false;
     }
