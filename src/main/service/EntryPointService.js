@@ -123,9 +123,6 @@ function verifyMACD(previousCrossover, currentCrossover) {
     if (!(currentCrossover.macd.cross > previousCrossover.macd.cross)) {
        throw `MACD crossover wasn\'t higher than previous crossover, ${previousCrossover.macd.cross} -> ${currentCrossover.macd.cross}`;
     }
-    if (!(previousCrossover.macd.histogram < 0 && currentCrossover.macd.histogram >= 0)) {
-        throw `MACD crossover wasn\'t crossing upwards, ${previousCrossover.macd.histogram} -> ${currentCrossover.macd.histogram}`;
-    }
 }
 
 function verifyRSI(previousCrossover, currentCrossover) {
