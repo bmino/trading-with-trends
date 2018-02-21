@@ -1,15 +1,30 @@
 const TechnicalAnalysisService = require('./TechnicalAnalysisService');
-const CrossoverObject = require('../object/CrossoverObject');
 
 let EntryPointService = {
     current: current,
-    historical: historical
+    historical: historical,
+
+    CONFIG: {
+        MACD: {
+            fast: 12,
+            slow: 26,
+            signal: 14
+        },
+        RSI: {
+            period: 10
+        },
+        STOCH: {
+            k: 14,
+            slowing: 3,
+            d: 3
+        }
+    }
 };
 
 module.exports = EntryPointService;
 
 function current(candles) {
-    return calculatePositiveCrossovers(candles)
+    return TechnicalAnalysisService.calculatePositiveCrossovers(candles, EntryPointService.CONFIG)
         .then((crossovers) => {
             let recentCrossover = crossovers[crossovers.length-1];
             let recentCandle = candles[candles.length-1];
@@ -23,7 +38,7 @@ function current(candles) {
 
 function historical(candles) {
     console.log(`Calculating entry points for ${candles[0].ticker} from ${new Date(candles[0].time)} - ${new Date(candles[candles.length-1].time)}`);
-    return calculatePositiveCrossovers(candles)
+    return TechnicalAnalysisService.calculatePositiveCrossovers(candles, EntryPointService.CONFIG)
         .then((crossovers) => {
             console.log(`Found ${crossovers.length} MACD crossovers`);
 
@@ -40,58 +55,6 @@ function historical(candles) {
         });
 }
 
-function calculatePositiveCrossovers(candlesticks) {
-    let closeValues = candlesticks.map((candle) => {return candle.close;});
-    let lowValues = candlesticks.map((candle) => {return candle.low;});
-    let highValues = candlesticks.map((candle) => {return candle.high;});
-
-    let crossoverObjects = [];
-    let calculationPromises = [];
-
-    calculationPromises.push(TechnicalAnalysisService.calculateMACD({
-        values: closeValues,
-        fast: 12,
-        slow: 26,
-        signal: 14
-    }));
-    calculationPromises.push(TechnicalAnalysisService.calculateRSI({
-        values: closeValues,
-        period: 10
-    }));
-    calculationPromises.push(TechnicalAnalysisService.calculateSTOCH({
-        highValues: highValues,
-        lowValues: lowValues,
-        closeValues: closeValues,
-        k: 14,
-        slowing: 3,
-        d: 3
-    }));
-
-    return Promise.all(calculationPromises)
-        .then((results) => {
-            let [calculatedMACD, calculatedRSI, calculatedSTOCH] = results;
-
-            for (let offset=0; offset<candlesticks.length; offset++) {
-                let currentCandlestick = candlesticks[candlesticks.length - 1 - offset];
-                let currentMACD = calculatedMACD[calculatedMACD.length - 1 - offset];
-                let previousMACD = calculatedMACD[calculatedMACD.length - 1 - 1 - offset];
-                let currentRSI = calculatedRSI[calculatedRSI.length - 1 - offset];
-                let currentSTOCH = calculatedSTOCH[calculatedSTOCH.length - 1 - offset];
-                if (currentMACD === undefined || currentMACD.histogram === undefined) continue;
-                if (previousMACD === undefined || previousMACD.histogram === undefined) continue;
-                if (currentRSI === undefined) continue;
-                if (currentSTOCH === undefined) continue;
-
-                if (currentMACD.cross !== undefined && previousMACD.histogram < 0 && currentMACD.histogram >= 0) {
-                    crossoverObjects = [new CrossoverObject(currentCandlestick.ticker, currentCandlestick.time, currentMACD, currentRSI, currentSTOCH)].concat(crossoverObjects);
-                }
-            }
-            return crossoverObjects;
-        })
-        .catch((error) => {
-            throw error;
-        });
-}
 
 function shouldEnterFromCrossovers(crossovers, crossoverReference=crossovers.length-1) {
     if (!crossovers || crossovers.length <= 1 || crossoverReference === 0) {

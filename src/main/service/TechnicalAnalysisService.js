@@ -1,10 +1,13 @@
 const tulind = require('tulind');
 const lineIntersect = require('line-intersect');
+const CrossoverObject = require('../object/CrossoverObject');
 
 let TechnicalAnalysisService = {
     calculateMACD: calculateMACD,
     calculateRSI: calculateRSI,
     calculateSTOCH: calculateSTOCH,
+
+    calculatePositiveCrossovers: calculatePositiveCrossovers,
 
     calculateCross: calculateCross
 };
@@ -74,6 +77,49 @@ function calculateSTOCH(config) {
                 });
             });
             return results;
+        })
+        .catch((error) => {
+            throw error;
+        });
+}
+
+function calculatePositiveCrossovers(candlesticks, configurations) {
+    let closeValues = candlesticks.map((candle) => {return candle.close;});
+    let lowValues = candlesticks.map((candle) => {return candle.low;});
+    let highValues = candlesticks.map((candle) => {return candle.high;});
+
+    configurations.MACD.values = closeValues;
+    configurations.RSI.values = closeValues;
+    configurations.STOCH.highValues = highValues;
+    configurations.STOCH.lowValues = lowValues;
+    configurations.STOCH.closeValues = closeValues;
+
+    let crossoverObjects = [];
+
+    return Promise.all([
+        TechnicalAnalysisService.calculateMACD(configurations.MACD),
+        TechnicalAnalysisService.calculateRSI(configurations.RSI),
+        TechnicalAnalysisService.calculateSTOCH(configurations.STOCH)
+    ])
+        .then((results) => {
+            let [calculatedMACD, calculatedRSI, calculatedSTOCH] = results;
+
+            for (let offset=0; offset<candlesticks.length; offset++) {
+                let currentCandlestick = candlesticks[candlesticks.length - 1 - offset];
+                let currentMACD = calculatedMACD[calculatedMACD.length - 1 - offset];
+                let previousMACD = calculatedMACD[calculatedMACD.length - 1 - 1 - offset];
+                let currentRSI = calculatedRSI[calculatedRSI.length - 1 - offset];
+                let currentSTOCH = calculatedSTOCH[calculatedSTOCH.length - 1 - offset];
+                if (currentMACD === undefined || currentMACD.histogram === undefined) continue;
+                if (previousMACD === undefined || previousMACD.histogram === undefined) continue;
+                if (currentRSI === undefined) continue;
+                if (currentSTOCH === undefined) continue;
+
+                if (currentMACD.cross !== undefined && previousMACD.histogram < 0 && currentMACD.histogram >= 0) {
+                    crossoverObjects = [new CrossoverObject(currentCandlestick.ticker, currentCandlestick.time, currentMACD, currentRSI, currentSTOCH)].concat(crossoverObjects);
+                }
+            }
+            return crossoverObjects;
         })
         .catch((error) => {
             throw error;
