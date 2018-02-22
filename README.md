@@ -21,3 +21,20 @@ RSI is (10)
 
 
 
+
+----------
+Exit Point
+----------
+
+Fail safe triggers:
+1) Gross loss of > 1.50%
+2) Open position lasts longer than 1 hour
+3) ...
+
+
+Conditions:
+1) MACD crosses back
+2) Live RSI falls below 40
+3) Live RSI drops 16 points from last closing candle
+4) Last three closing candles have RSI of 4X
+5) RSI closes at 70+ and then later falls below 50
