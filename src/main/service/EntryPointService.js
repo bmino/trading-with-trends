@@ -40,35 +40,26 @@ function historical(candles) {
     console.log(`Calculating entry points for ${candles[0].ticker} from ${new Date(candles[0].time)} - ${new Date(candles[candles.length-1].time)}`);
     return TechnicalAnalysisService.calculatePositiveCrossovers(candles, EntryPointService.CONFIG)
         .then((crossovers) => {
-            console.log(`Found ${crossovers.length} MACD crossovers`);
-
-            let historyEntryCrossovers = [];
-            crossovers.forEach((crossover, index) => {
-                console.log(`\nChecking crossover at ${new Date(crossovers[index].time).toString()}`);
-                if (shouldEnterFromCrossovers(crossovers, index)) {
-                    historyEntryCrossovers.push(crossover);
-                }
+            let historyEntryCrossovers = crossovers.filter((crossover) => {
+                console.log(`\nChecking crossover at ${new Date(crossover.time).toString()}`);
+                return shouldEnterFromCrossovers(crossovers.slice(0, crossovers.indexOf(crossover)+1));
             });
             console.log(`\nFound ${historyEntryCrossovers.length} historical entry points`);
-            console.log(historyEntryCrossovers.map((crossover) => {return new Date(crossover.time).toString();}));
+            console.log(historyEntryCrossovers.map((crossover) => new Date(crossover.time).toString()));
             return historyEntryCrossovers;
         });
 }
 
 
-function shouldEnterFromCrossovers(crossovers, crossoverReference=crossovers.length-1) {
-    if (!crossovers || crossovers.length <= 1 || crossoverReference === 0) {
+function shouldEnterFromCrossovers(crossovers) {
+    if (!crossovers || crossovers.length < 2) {
         console.log(`No previous crossover found to compare against`);
-        return false;
-    }
-    if (crossoverReference < 0 || crossoverReference >= crossovers.length) {
-        console.log(`Crossover reference of ${crossoverReference} is invalid`);
         return false;
     }
 
     try {
-        let currentCrossover = crossovers[crossoverReference];
-        let previousCrossover = crossovers[crossoverReference-1];
+        let currentCrossover = crossovers[crossovers.length-1];
+        let previousCrossover = crossovers[crossovers.length-2];
         verifyMACD(previousCrossover, currentCrossover);
         verifyRSI(previousCrossover, currentCrossover);
         verifySTOCH(currentCrossover);
