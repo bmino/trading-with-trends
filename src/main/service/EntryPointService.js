@@ -1,7 +1,7 @@
 const TechnicalAnalysisService = require('./TechnicalAnalysisService');
 
 let EntryPointService = {
-    current: current,
+    shouldEnter: shouldEnter,
     historical: historical,
 
     CONFIG: {
@@ -23,7 +23,7 @@ let EntryPointService = {
 
 module.exports = EntryPointService;
 
-function current(candles) {
+function shouldEnter(candles) {
     return TechnicalAnalysisService.calculatePositiveCrossovers(candles, EntryPointService.CONFIG)
         .then((crossovers) => {
             let recentCrossover = crossovers[crossovers.length-1];
