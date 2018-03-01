@@ -14,14 +14,14 @@ let TechnicalAnalysisService = {
 
 module.exports = TechnicalAnalysisService;
 
-function calculateMACD(config) {
+function calculateMACD(config, values) {
     if (!config) throw 'No config given.';
-    if (!config.values) throw 'No values given.';
+    if (!values) throw 'No values given.';
     if (!config.fast) throw 'No fast value given.';
     if (!config.slow) throw 'No slow value given.';
     if (!config.signal) throw 'No signal value given.';
 
-    return tulind.indicators.macd.indicator([config.values], [config.fast, config.slow, config.signal])
+    return tulind.indicators.macd.indicator([values], [config.fast, config.slow, config.signal])
         .then((calculations) => {
             let [macds, signals, histograms] = calculations;
             let results = [];
@@ -43,12 +43,12 @@ function calculateMACD(config) {
         });
 }
 
-function calculateRSI(config) {
+function calculateRSI(config, values) {
     if (!config) throw 'No configuration given.';
-    if (!config.values) throw 'No values given.';
+    if (!values) throw 'No values given.';
     if (!config.period) throw 'No period value given.';
 
-    return tulind.indicators.rsi.indicator([config.values], [config.period])
+    return tulind.indicators.rsi.indicator([values], [config.period])
         .then((calculations) => {
             return calculations[0];
         })
@@ -57,16 +57,17 @@ function calculateRSI(config) {
         });
 }
 
-function calculateSTOCH(config) {
+function calculateSTOCH(config, values) {
     if (!config) throw 'No config given.';
-    if (!config.highValues) throw 'No high values given.';
-    if (!config.lowValues) throw 'No low values given.';
-    if (!config.closeValues) throw 'No close values given.';
+    if (!values) throw 'No values given';
+    if (!values.highValues) throw 'No high values given.';
+    if (!values.lowValues) throw 'No low values given.';
+    if (!values.closeValues) throw 'No close values given.';
     if (!config.k) throw 'No k value given';
     if (!config.slowing) throw 'No slowing value given';
     if (!config.d) throw 'No d value given';
 
-    return tulind.indicators.stoch.indicator([config.highValues, config.lowValues, config.closeValues], [config.k, config.slowing, config.d])
+    return tulind.indicators.stoch.indicator([values.highValues, values.lowValues, values.closeValues], [config.k, config.slowing, config.d])
         .then((calculations) => {
             let [kValues, dValues] = calculations;
             let results = [];
@@ -88,18 +89,17 @@ function calculatePositiveCrossovers(candlesticks, configurations) {
     let lowValues = candlesticks.map((candle) => {return candle.low;});
     let highValues = candlesticks.map((candle) => {return candle.high;});
 
-    configurations.MACD.values = closeValues;
-    configurations.RSI.values = closeValues;
-    configurations.STOCH.highValues = highValues;
-    configurations.STOCH.lowValues = lowValues;
-    configurations.STOCH.closeValues = closeValues;
-
     let crossoverObjects = [];
+    let stochValues = {
+        highValues: highValues,
+        lowValues: lowValues,
+        closeValues: closeValues
+    };
 
     return Promise.all([
-        TechnicalAnalysisService.calculateMACD(configurations.MACD),
-        TechnicalAnalysisService.calculateRSI(configurations.RSI),
-        TechnicalAnalysisService.calculateSTOCH(configurations.STOCH)
+        TechnicalAnalysisService.calculateMACD(configurations.MACD, closeValues),
+        TechnicalAnalysisService.calculateRSI(configurations.RSI, closeValues),
+        TechnicalAnalysisService.calculateSTOCH(configurations.STOCH, stochValues)
     ])
         .then((results) => {
             let [calculatedMACD, calculatedRSI, calculatedSTOCH] = results;
