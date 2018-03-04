@@ -1,5 +1,7 @@
 const binance = require('node-binance-api');
 const EntryPointService = require('./EntryPointService');
+const ExitPointService = require('./ExitPointService');
+const OpenPositionService = require('./OpenPositionService');
 const Candlestick = require('../object/Candlestick');
 
 let MarketDataService = {
@@ -11,7 +13,10 @@ let MarketDataService = {
 
     watch: watch,
     backfill: backfill,
-    getCandleHistory: getCandleHistory
+    getCandleHistory: getCandleHistory,
+
+    processTick: processTick,
+    processCandlestick: processCandlestick
 };
 
 module.exports = MarketDataService;
@@ -53,24 +58,35 @@ function watch(tickers, interval='1m') {
 }
 
 function processTick(tick) {
-    let { E:eventTime, s:ticker, k:candle } = tick;
-    let { o:open, c:close, h:high, l:low, y:volume, n:trades, x:final, i:interval } = candle;
+    let {E: eventTime, s: ticker, k: candle} = tick;
+    let {o: open, c: close, h: high, l: low, y: volume, n: trades, x: final, i: interval} = candle;
 
-    candle = new Candlestick(ticker, eventTime, open, close, high, low, volume, trades, final);
+    let candlestick = new Candlestick(ticker, eventTime, interval, open, close, high, low, volume, trades, final);
+    return processCandlestick(candlestick);
+}
 
-    if (containsNoCandles(ticker)) {
-        // First tick update
-        addCandle(ticker, candle);
-        backfill(ticker, interval, eventTime, 500);
-    } else if (getLastCandle(ticker).final) {
-        // Need to create new candle
-        console.log(`Received final ${ticker} candlesticks tick`);
-        addCandle(ticker, candle);
-        EntryPointService.shouldEnter(MarketDataService.candles[ticker]);
-    } else {
-        // Update the most recent candle
-        overrideLastCandle(ticker, candle);
-    }
+function processCandlestick(candle) {
+    let ticker = candle.ticker;
+    let candles = [];
+
+    let backFillPromise = containsNoCandles(ticker) ? backfill(ticker, candle.interval, candle.time, 500) : Promise.resolve();
+    addCandle(ticker, candle);
+
+    return backFillPromise
+        .then(() => {
+            candles = MarketDataService.candles[ticker].slice(0, MarketDataService.candles[ticker].indexOf(candle)+1);
+            return EntryPointService.shouldEnter(candles);
+        })
+        .then((shouldEnter) => {
+            if (shouldEnter) return OpenPositionService.enterPosition(ticker, candles, EntryPointService.CONFIG);
+        })
+        .then(() => {
+            return ExitPointService.shouldExit(candles);
+        })
+        .then((shouldExit) => {
+            if (shouldExit) return OpenPositionService.exitPosition(ticker, candles, ExitPointService.CONFIG);
+        })
+        .catch(console.error);
 }
 
 function backfill(ticker, interval, endTime, limit=500) {
@@ -95,12 +111,12 @@ function getCandleHistory(ticker, interval, endTime, limit=500, candleShelf=[]) 
             endTime: typeof endTime === 'number' ? endTime : endTime.getTime()
         };
 
-        console.log(`Looking up candlesticks ${options.limit} intervals before ${new Date(endTime).toString()}`);
+        console.log(`Fetching candlesticks ${options.limit} intervals before ${new Date(endTime).toString()}`);
         binance.candlesticks(ticker, interval, (error, ticks, symbol) => {
             if (error) return reject(error);
             candleShelf = ticks.map(tick => {
                 let [time, open, high, low, close, volume, closeTime, assetVolume, trades, buyBaseVolume, buyAssetVolume, ignored] = tick;
-                return new Candlestick(symbol, time, open, close, high, low, volume, trades, true, true);
+                return new Candlestick(symbol, time, interval, open, close, high, low, volume, trades, true, true);
             }).concat(candleShelf);
             return getCandleHistory(ticker, interval, candleShelf[0].time-1, limit-=500, candleShelf)
                 .then(resolve)
@@ -114,6 +130,7 @@ function clearCandles(ticker) {
 }
 
 function containsNoCandles(ticker) {
+    if (!MarketDataService.candles[ticker]) return true;
     return MarketDataService.candles[ticker].length === 0;
 }
 
@@ -122,7 +139,9 @@ function getLastCandle(ticker) {
 }
 
 function addCandle(ticker, candle) {
-    MarketDataService.candles[ticker].push(candle);
+    if (containsNoCandles(ticker)) return MarketDataService.candles[ticker] = [candle];
+    if (getLastCandle(ticker).final) return MarketDataService.candles[ticker].push(candle);
+    else return overrideLastCandle(ticker, candle);
 }
 
 function removeOutdatedCandles(candlesToFilter) {

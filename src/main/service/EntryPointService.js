@@ -1,8 +1,9 @@
 const TechnicalAnalysisService = require('./TechnicalAnalysisService');
+const OpenPositionService = require('./OpenPositionService');
 
 let EntryPointService = {
     shouldEnter: shouldEnter,
-    historical: historical,
+    historicalEntryPoints: historicalEntryPoints,
 
     CONFIG: {
         MACD: {
@@ -24,24 +25,28 @@ let EntryPointService = {
 module.exports = EntryPointService;
 
 function shouldEnter(candles) {
+    let ticker = candles[0].ticker;
+
+    if (OpenPositionService.getOpenPosition(ticker)) {
+        //console.log(`An entry position already exists for ${ticker}`);
+        return Promise.resolve(false);
+    }
+
     return TechnicalAnalysisService.calculatePositiveCrossovers(candles, EntryPointService.CONFIG)
         .then((crossovers) => {
+            if (!crossovers) return false;
             let recentCrossover = crossovers[crossovers.length-1];
             let recentCandle = candles[candles.length-1];
             if (recentCrossover.time !== recentCandle.time) return false;
             return shouldEnterFromCrossovers(crossovers);
-        })
-        .then((result) => {
-            if (result) console.log(`Would enter into ${candles[0].ticker} at ${new Date().toString()}`);
         });
 }
 
-function historical(candles) {
+function historicalEntryPoints(candles) {
     console.log(`Calculating entry points for ${candles[0].ticker} from ${new Date(candles[0].time)} - ${new Date(candles[candles.length-1].time)}`);
     return TechnicalAnalysisService.calculatePositiveCrossovers(candles, EntryPointService.CONFIG)
         .then((crossovers) => {
             let historyEntryCrossovers = crossovers.filter((crossover) => {
-                console.log(`\nChecking crossover at ${new Date(crossover.time).toString()}`);
                 return shouldEnterFromCrossovers(crossovers.slice(0, crossovers.indexOf(crossover)+1));
             });
             console.log(`\nFound ${historyEntryCrossovers.length} historical entry points`);
@@ -60,6 +65,7 @@ function shouldEnterFromCrossovers(crossovers) {
     try {
         let currentCrossover = crossovers[crossovers.length-1];
         let previousCrossover = crossovers[crossovers.length-2];
+        console.log(`\nChecking crossover at ${new Date(currentCrossover.time).toString()}`);
         verifyMACD(previousCrossover, currentCrossover);
         verifyRSI(previousCrossover, currentCrossover);
         verifySTOCH(currentCrossover);
@@ -68,7 +74,6 @@ function shouldEnterFromCrossovers(crossovers) {
         return false;
     }
 
-    console.log('Met all entry criteria for crossover!');
     return true;
 }
 

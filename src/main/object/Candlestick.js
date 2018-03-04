@@ -1,7 +1,8 @@
-function Candlestick(ticker, time, open, close, high, low, volume, trades, final, backfilled=false) {
+function Candlestick(ticker, time, interval, open, close, high, low, volume, trades, final, backfilled=false) {
     let self = this;
-    self.time = time;
     self.ticker = ticker;
+    self.time = time;
+    self.interval = interval;
     self.open = parseFloat(open);
     self.close = parseFloat(close);
     self.high = parseFloat(high);

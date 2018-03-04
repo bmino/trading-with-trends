@@ -8,6 +8,7 @@ let TechnicalAnalysisService = {
     calculateSTOCH: calculateSTOCH,
 
     calculatePositiveCrossovers: calculatePositiveCrossovers,
+    calculateNegativeCrossovers: calculateNegativeCrossovers,
 
     calculateCross: calculateCross
 };
@@ -85,6 +86,48 @@ function calculateSTOCH(config, values) {
 }
 
 function calculatePositiveCrossovers(candlesticks, configurations) {
+    let closeValues = candlesticks.map((candle) => candle.close);
+    let lowValues = candlesticks.map((candle) => candle.low);
+    let highValues = candlesticks.map((candle) => candle.high);
+
+    let crossoverObjects = [];
+    let stochValues = {
+        highValues: highValues,
+        lowValues: lowValues,
+        closeValues: closeValues
+    };
+
+    return Promise.all([
+        TechnicalAnalysisService.calculateMACD(configurations.MACD, closeValues),
+        TechnicalAnalysisService.calculateRSI(configurations.RSI, closeValues),
+        TechnicalAnalysisService.calculateSTOCH(configurations.STOCH, stochValues)
+    ])
+        .then((results) => {
+            let [calculatedMACD, calculatedRSI, calculatedSTOCH] = results;
+
+            for (let offset=0; offset<candlesticks.length; offset++) {
+                let currentCandlestick = candlesticks[candlesticks.length - 1 - offset];
+                let currentMACD = calculatedMACD[calculatedMACD.length - 1 - offset];
+                let previousMACD = calculatedMACD[calculatedMACD.length - 1 - 1 - offset];
+                let currentRSI = calculatedRSI[calculatedRSI.length - 1 - offset];
+                let currentSTOCH = calculatedSTOCH[calculatedSTOCH.length - 1 - offset];
+                if (currentMACD === undefined || currentMACD.histogram === undefined) continue;
+                if (previousMACD === undefined || previousMACD.histogram === undefined) continue;
+                if (currentRSI === undefined) continue;
+                if (currentSTOCH === undefined) continue;
+
+                if (currentMACD.cross !== undefined && previousMACD.histogram < 0 && currentMACD.histogram >= 0) {
+                    crossoverObjects = [new CrossoverObject(currentCandlestick.ticker, currentCandlestick.time, currentMACD, currentRSI, currentSTOCH)].concat(crossoverObjects);
+                }
+            }
+            return crossoverObjects;
+        })
+        .catch((error) => {
+            throw error;
+        });
+}
+
+function calculateNegativeCrossovers(candlesticks, configurations) {
     let closeValues = candlesticks.map((candle) => {return candle.close;});
     let lowValues = candlesticks.map((candle) => {return candle.low;});
     let highValues = candlesticks.map((candle) => {return candle.high;});
@@ -115,7 +158,7 @@ function calculatePositiveCrossovers(candlesticks, configurations) {
                 if (currentRSI === undefined) continue;
                 if (currentSTOCH === undefined) continue;
 
-                if (currentMACD.cross !== undefined && previousMACD.histogram < 0 && currentMACD.histogram >= 0) {
+                if (currentMACD.cross !== undefined && previousMACD.histogram > 0 && currentMACD.histogram <= 0) {
                     crossoverObjects = [new CrossoverObject(currentCandlestick.ticker, currentCandlestick.time, currentMACD, currentRSI, currentSTOCH)].concat(crossoverObjects);
                 }
             }
