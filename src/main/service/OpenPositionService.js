@@ -7,6 +7,8 @@ let OpenPositionService = {
         PROFIT: 0,
     },
 
+    reset: reset,
+
     getOpenPosition: getOpenPosition,
     getOpenPositions: getOpenPositions,
 
@@ -18,6 +20,11 @@ let OpenPositionService = {
 
 module.exports = OpenPositionService;
 
+
+function reset() {
+    OpenPositionService.POSITIONS = {};
+    OpenPositionService.HISTORY.PROFIT = 0;
+}
 
 function getOpenPosition(ticker) {
     return OpenPositionService.POSITIONS[ticker];
