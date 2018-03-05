@@ -90,23 +90,24 @@ function exitBecauseRsiDropped(ticker, candles) {
     let closeValues = candles.map((candle) => {return candle.close;});
     return TechnicalAnalysisService.calculateRSI(ExitPositionService.CONFIG.RSI, closeValues)
         .then((rsiList) => {
+            let previousRSI = rsiList[rsiList.length-2];
             let currentRSI = rsiList[rsiList.length-1];
             let openPosition = OpenPositionService.getOpenPosition(ticker);
 
-            if (openPosition.rsi < 50 && openPosition.condition.rsiBroke70) {
-                console.log(`RSI broke 70 and then fell to ${openPosition.rsi}`);
+            if (currentRSI < 50 && openPosition.condition.rsiBroke70) {
+                console.log(`RSI broke 70 and then fell to ${currentRSI}`);
                 return Promise.resolve(true);
             }
 
-            if (openPosition.rsi > 70 && !openPosition.condition.rsiBroke70) OpenPositionService.updateCondition(ticker, 'rsiBroke70', true);
+            if (currentRSI > 70 && !openPosition.condition.rsiBroke70) OpenPositionService.updateCondition(ticker, 'rsiBroke70', true);
 
             if (currentRSI < 40) {
                 console.log(`RSI low value of ${currentRSI} detected`);
                 return Promise.resolve(true);
             }
 
-            if (currentRSI < openPosition.rsi + - 16) {
-                console.log(`RSI dropped from ${openPosition.rsi} to ${currentRSI}`);
+            if (currentRSI < (previousRSI - 16)) {
+                console.log(`RSI dropped from ${previousRSI} to ${currentRSI}`);
                 return Promise.resolve(true);
             }
 
