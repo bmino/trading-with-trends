@@ -80,8 +80,8 @@ function processCandlestick(candle) {
         .then((shouldEnter) => {
             if (shouldEnter) return OpenPositionService.enterPosition(ticker, candles, EntryPointService.CONFIG);
         })
-        .then(() => {
-            return ExitPointService.shouldExit(candles);
+        .then((openPosition) => {
+            if (!openPosition) return ExitPointService.shouldExit(candles);
         })
         .then((shouldExit) => {
             if (shouldExit) return OpenPositionService.exitPosition(ticker, candles, ExitPointService.CONFIG);
