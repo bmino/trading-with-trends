@@ -124,10 +124,7 @@ function exitBecauseRecentCandlesHaveLowRsi(ticker, candles) {
             let recentCandleCount = 3;
             let rsiMin = 40;
             let rsiMax= 49;
-            let recentRsiValues = [];
-            for (let i=recentCandleCount; i>0; i--) {
-                recentRsiValues.push(rsiList[rsiList.length - recentCandleCount]);
-            }
+            let recentRsiValues = rsiList.slice(-recentCandleCount);
             let withinWindow = recentRsiValues.map((rsiValue) => rsiValue >= rsiMin && rsiValue <= rsiMax);
             let allWithinWindow = withinWindow.indexOf(false) === -1;
 
