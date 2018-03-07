@@ -5,8 +5,10 @@ const config = require('../../config/manual/backtest');
 MarketDataService.getCandleHistory(config.ticker, config.interval, config.endDate, config.limit)
     .then(backtestPosition)
     .then(() => {
-        console.log(`\nResults:`);
-        console.log(`Total Profit: ${OpenPositionService.HISTORY.PROFIT}%`);
+        console.log(`\n\nResults:`);
+        console.log(`Position Profits:`);
+        console.log(OpenPositionService.HISTORY.PROFIT[config.ticker].map((p) => p.toFixed(4) + '%'));
+        console.log(`\nTotal Profit: ${OpenPositionService.calculateTotalProfit()}%`);
     })
     .catch(console.error);
 

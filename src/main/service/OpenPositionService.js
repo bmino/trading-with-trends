@@ -4,7 +4,7 @@ const TechnicalAnalysisService = require('./TechnicalAnalysisService');
 let OpenPositionService = {
     POSITIONS: {},
     HISTORY: {
-        PROFIT: 0,
+        PROFIT: {},
     },
 
     reset: reset,
@@ -15,7 +15,10 @@ let OpenPositionService = {
     enterPosition: enterPosition,
     exitPosition: exitPosition,
 
-    updateCondition: updateCondition
+    updateCondition: updateCondition,
+
+    calculateProfit: calculateProfit,
+    calculateTotalProfit: calculateTotalProfit
 };
 
 module.exports = OpenPositionService;
@@ -23,7 +26,7 @@ module.exports = OpenPositionService;
 
 function reset() {
     OpenPositionService.POSITIONS = {};
-    OpenPositionService.HISTORY.PROFIT = 0;
+    OpenPositionService.HISTORY.PROFIT = {};
 }
 
 function getOpenPosition(ticker) {
@@ -36,6 +39,7 @@ function getOpenPositions() {
 
 function enterPosition(ticker, candles, configuration) {
     if (getOpenPosition(ticker)) return Promise.reject(`Position already open for ${ticker}`);
+    if (!OpenPositionService.HISTORY.PROFIT[ticker]) OpenPositionService.HISTORY.PROFIT[ticker] = [];
 
     let currentCandle = candles[candles.length-1];
     let closeValues = candles.map((candle) => candle.close);
@@ -68,13 +72,23 @@ function exitPosition(ticker, candles, configuration) {
     // TODO: api call to place sell order
     let position = OpenPositionService.POSITIONS[ticker];
     let profit = (currentCandle.close - position.candle.close) / currentCandle.close * 100;
+    OpenPositionService.HISTORY.PROFIT[ticker].push(profit);
     console.log(`Profit: ${profit}%`);
 
-    OpenPositionService.HISTORY.PROFIT += profit;
     delete OpenPositionService.POSITIONS[ticker];
     return Promise.resolve(position);
 }
 
 function updateCondition(ticker, condition, value) {
     OpenPositionService.POSITIONS[ticker].condition[condition] = value;
+}
+
+function calculateProfit(ticker) {
+    return OpenPositionService.HISTORY.PROFIT[ticker].reduce((accumulator, currentValue) => accumulator + currentValue);
+}
+
+function calculateTotalProfit() {
+    return Object.values(OpenPositionService.HISTORY.PROFIT)
+        .reduce((flat, next) => flat.concat(next), [])
+        .reduce((accumulator, currentValue) => accumulator + currentValue);
 }
