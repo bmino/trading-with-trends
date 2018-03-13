@@ -116,10 +116,11 @@ function calculatePositiveCrossovers(candlesticks, configurations) {
     return Promise.all([
         TechnicalAnalysisService.calculateMACD(configurations.MACD, closeValues),
         TechnicalAnalysisService.calculateRSI(configurations.RSI, closeValues),
-        TechnicalAnalysisService.calculateSTOCH(configurations.STOCH, stochValues)
+        TechnicalAnalysisService.calculateSTOCH(configurations.STOCH, stochValues),
+        TechnicalAnalysisService.calculateTEMA(configurations.TEMA, closeValues)
     ])
         .then((results) => {
-            let [calculatedMACD, calculatedRSI, calculatedSTOCH] = results;
+            let [calculatedMACD, calculatedRSI, calculatedSTOCH, calculatedTEMA] = results;
 
             for (let offset=0; offset<candlesticks.length; offset++) {
                 let currentCandlestick = candlesticks[candlesticks.length - 1 - offset];
@@ -127,13 +128,14 @@ function calculatePositiveCrossovers(candlesticks, configurations) {
                 let previousMACD = calculatedMACD[calculatedMACD.length - 1 - 1 - offset];
                 let currentRSI = calculatedRSI[calculatedRSI.length - 1 - offset];
                 let currentSTOCH = calculatedSTOCH[calculatedSTOCH.length - 1 - offset];
+                let currentTEMA = calculatedTEMA[calculatedTEMA.length - 1 - offset];
                 if (currentMACD === undefined || currentMACD.histogram === undefined) continue;
                 if (previousMACD === undefined || previousMACD.histogram === undefined) continue;
                 if (currentRSI === undefined) continue;
                 if (currentSTOCH === undefined) continue;
 
                 if (currentMACD.cross !== undefined && previousMACD.histogram < 0 && currentMACD.histogram >= 0) {
-                    crossoverObjects = [new CrossoverObject(currentCandlestick.ticker, currentCandlestick.time, currentMACD, currentRSI, currentSTOCH)].concat(crossoverObjects);
+                    crossoverObjects = [new CrossoverObject(currentCandlestick.ticker, currentCandlestick.time, currentCandlestick.close, currentMACD, currentRSI, currentSTOCH, currentTEMA)].concat(crossoverObjects);
                 }
             }
             return crossoverObjects;
@@ -158,10 +160,11 @@ function calculateNegativeCrossovers(candlesticks, configurations) {
     return Promise.all([
         TechnicalAnalysisService.calculateMACD(configurations.MACD, closeValues),
         TechnicalAnalysisService.calculateRSI(configurations.RSI, closeValues),
-        TechnicalAnalysisService.calculateSTOCH(configurations.STOCH, stochValues)
+        TechnicalAnalysisService.calculateSTOCH(configurations.STOCH, stochValues),
+        TechnicalAnalysisService.calculateTEMA(configurations.TEMA, closeValues)
     ])
         .then((results) => {
-            let [calculatedMACD, calculatedRSI, calculatedSTOCH] = results;
+            let [calculatedMACD, calculatedRSI, calculatedSTOCH, calculatedTEMA] = results;
 
             for (let offset=0; offset<candlesticks.length; offset++) {
                 let currentCandlestick = candlesticks[candlesticks.length - 1 - offset];
@@ -169,13 +172,14 @@ function calculateNegativeCrossovers(candlesticks, configurations) {
                 let previousMACD = calculatedMACD[calculatedMACD.length - 1 - 1 - offset];
                 let currentRSI = calculatedRSI[calculatedRSI.length - 1 - offset];
                 let currentSTOCH = calculatedSTOCH[calculatedSTOCH.length - 1 - offset];
+                let currentTEMA = calculatedTEMA[calculatedTEMA.length - 1 - offset];
                 if (currentMACD === undefined || currentMACD.histogram === undefined) continue;
                 if (previousMACD === undefined || previousMACD.histogram === undefined) continue;
                 if (currentRSI === undefined) continue;
                 if (currentSTOCH === undefined) continue;
 
                 if (currentMACD.cross !== undefined && previousMACD.histogram > 0 && currentMACD.histogram <= 0) {
-                    crossoverObjects = [new CrossoverObject(currentCandlestick.ticker, currentCandlestick.time, currentMACD, currentRSI, currentSTOCH)].concat(crossoverObjects);
+                    crossoverObjects = [new CrossoverObject(currentCandlestick.ticker, currentCandlestick.time, currentCandlestick.close, currentMACD, currentRSI, currentSTOCH, currentTEMA)].concat(crossoverObjects);
                 }
             }
             return crossoverObjects;

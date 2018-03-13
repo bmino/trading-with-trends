@@ -17,6 +17,9 @@ let ExitPositionService = {
             k: 14,
             slowing: 3,
             d: 3
+        },
+        TEMA: {
+            period: 100
         }
     }
 

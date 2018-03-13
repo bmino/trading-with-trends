@@ -18,6 +18,9 @@ let EntryPointService = {
             k: 14,
             slowing: 3,
             d: 3
+        },
+        TEMA: {
+            period: 100
         }
     }
 };
@@ -69,6 +72,7 @@ function shouldEnterFromCrossovers(crossovers) {
         verifyMACD(previousCrossover, currentCrossover);
         verifyRSI(previousCrossover, currentCrossover);
         verifySTOCH(currentCrossover);
+        verifyTEMA(currentCrossover);
     } catch (customError) {
         console.log(customError);
         return false;
@@ -101,6 +105,12 @@ function verifySTOCH(currentCrossover) {
         (inRange(currentCrossover.stoch.k, 80, 89) && inRange(currentCrossover.stoch.d, 80, 89)) ||
         (inRange(currentCrossover.stoch.k, 80, 84) && inRange(currentCrossover.stoch.d, 70, 79))) {
         throw `STOCH falls within blacklisted ranges, k:${currentCrossover.stoch.k} d:${currentCrossover.stoch.d}`;
+    }
+}
+
+function verifyTEMA(currentCrossover) {
+    if (currentCrossover.tema > currentCrossover.price) {
+        throw `TEMA was above price, ${currentCrossover.tema} > ${currentCrossover.price}`;
     }
 }
 
