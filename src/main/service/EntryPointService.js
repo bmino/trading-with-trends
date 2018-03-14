@@ -20,7 +20,7 @@ let EntryPointService = {
             d: 3
         },
         TEMA: {
-            period: 100
+            period: 200
         }
     }
 };
