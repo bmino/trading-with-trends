@@ -20,6 +20,16 @@ let ExitPositionService = {
         },
         TEMA: {
             period: 200
+        },
+        CRITERIA: {
+            failsafe_max_percent_loss: 1.5,
+            failsafe_max_minutes_in_position: 60,
+            rsi_high_threshold_to_break_ceiling: 70,
+            rsi_low_threshold_after_breaking_ceiling: 50,
+            rsi_floor_threshold: 40,
+            rsi_drop_threshold: 16,
+            rsi_recent_candles_watch_count: 3,
+            rsi_recent_candles_low_range: [40,49]
         }
     }
 
@@ -28,47 +38,47 @@ let ExitPositionService = {
 module.exports = ExitPositionService;
 
 
-function shouldExit(candles) {
+function shouldExit(candles, config=ExitPositionService.CONFIG) {
     let ticker = candles[0].ticker;
 
     if (!OpenPositionService.getOpenPosition(ticker)) {
-        //console.log(`An open position does not exist for ${ticker}`);
         return Promise.resolve(false);
     }
 
-    return detectFailSafe(ticker, candles)
+    return detectFailSafe(ticker, candles, config)
         .then((detectedFailsafe) => {
             if (detectedFailsafe) return Promise.resolve(detectedFailsafe);
-            return detectExitReason(ticker, candles);
+            return detectExitReason(ticker, candles, config);
         })
         .catch(console.error);
 }
 
-function detectFailSafe(ticker, candles) {
-    let ONE_HOUR = 60 * 60 * 1000;
+function detectFailSafe(ticker, candles, config) {
+    let max_minutes = config.CRITERIA.failsafe_max_minutes_in_position;
+    let MAX_MILLISECONDS = max_minutes * 60 * 1000;
     let openPosition = OpenPositionService.getOpenPosition(ticker);
     let currentCandle = candles[candles.length-1];
     let profit = candles[candles.length - 1].close - openPosition.candle.close;
     let profitPercent = profit / openPosition.candle.close * 100;
 
-    if (profitPercent < -1.5) {
+    if (profitPercent < (-1 * config.CRITERIA.failsafe_max_percent_loss)) {
         console.log(`Failsafe triggered, loss of ${profitPercent}%`);
         return Promise.resolve(true);
     }
 
-    if (new Date(currentCandle.time).getTime() - openPosition.time > ONE_HOUR) {
-        console.log(`Failsafe triggered, open time beyond 1 hour`);
+    if (new Date(currentCandle.time).getTime() - openPosition.time > MAX_MILLISECONDS) {
+        console.log(`Failsafe triggered, open time beyond ${max_minutes} minutes`);
         return Promise.resolve(true);
     }
 
     return Promise.resolve(false);
 }
 
-function detectExitReason(ticker, candles) {
+function detectExitReason(ticker, candles, config) {
     return Promise.all([
-        exitBecauseMacdCrossedBack(ticker, candles),
-        exitBecauseRsiDropped(ticker, candles),
-        exitBecauseRecentCandlesHaveLowRsi(ticker, candles)
+        exitBecauseMacdCrossedBack(ticker, candles, config),
+        exitBecauseRsiDropped(ticker, candles, config),
+        exitBecauseRecentCandlesHaveLowRsi(ticker, candles, config)
     ])
         .then((results) => {
             return Promise.resolve(results.indexOf(true) >= 0);
@@ -76,8 +86,8 @@ function detectExitReason(ticker, candles) {
         .catch(console.error);
 }
 
-function exitBecauseMacdCrossedBack(ticker, candles) {
-    return TechnicalAnalysisService.calculateNegativeCrossovers(candles, ExitPositionService.CONFIG)
+function exitBecauseMacdCrossedBack(ticker, candles, config) {
+    return TechnicalAnalysisService.calculateNegativeCrossovers(candles, config)
         .then((crossovers) => {
             let recentCrossover = crossovers[crossovers.length-1];
             let recentCandle = candles[candles.length-1];
@@ -89,27 +99,29 @@ function exitBecauseMacdCrossedBack(ticker, candles) {
         });
 }
 
-function exitBecauseRsiDropped(ticker, candles) {
+function exitBecauseRsiDropped(ticker, candles, config) {
     let closeValues = candles.map((candle) => {return candle.close;});
-    return TechnicalAnalysisService.calculateRSI(ExitPositionService.CONFIG.RSI, closeValues)
+    return TechnicalAnalysisService.calculateRSI(config.RSI, closeValues)
         .then((rsiList) => {
             let previousRSI = rsiList[rsiList.length-2];
             let currentRSI = rsiList[rsiList.length-1];
             let openPosition = OpenPositionService.getOpenPosition(ticker);
 
-            if (currentRSI < 50 && openPosition.condition.rsiBroke70) {
-                console.log(`RSI broke 70 and then fell to ${currentRSI}`);
+            if (currentRSI < config.CRITERIA.rsi_low_threshold_after_breaking_ceiling && openPosition.condition.rsiMax > config.CRITERIA.rsi_high_threshold_to_break_ceiling) {
+                console.log(`RSI broke ${config.CRITERIA.rsi_high_threshold_to_break_ceiling} and then fell to ${currentRSI}`);
                 return Promise.resolve(true);
             }
 
-            if (currentRSI > 70 && !openPosition.condition.rsiBroke70) OpenPositionService.updateCondition(ticker, 'rsiBroke70', true);
+            if (currentRSI > openPosition.condition.rsiMax) {
+                OpenPositionService.updateCondition(ticker, 'rsiMax', currentRSI);
+            }
 
-            if (currentRSI < 40) {
+            if (currentRSI < config.CRITERIA.rsi_floor_threshold) {
                 console.log(`RSI low value of ${currentRSI} detected`);
                 return Promise.resolve(true);
             }
 
-            if (currentRSI < (previousRSI - 16)) {
+            if (currentRSI < (previousRSI - config.CRITERIA.rsi_drop_threshold)) {
                 console.log(`RSI dropped from ${previousRSI} to ${currentRSI}`);
                 return Promise.resolve(true);
             }
@@ -118,15 +130,15 @@ function exitBecauseRsiDropped(ticker, candles) {
         });
 }
 
-function exitBecauseRecentCandlesHaveLowRsi(ticker, candles) {
+function exitBecauseRecentCandlesHaveLowRsi(ticker, candles, config) {
     if (!candles[candles.length-1].final) return Promise.resolve(false);
 
     let closeValues = candles.map((candle) => {return candle.close;});
-    return TechnicalAnalysisService.calculateRSI(ExitPositionService.CONFIG.RSI, closeValues)
+    return TechnicalAnalysisService.calculateRSI(config.RSI, closeValues)
         .then((rsiList) => {
-            let recentCandleCount = 3;
-            let rsiMin = 40;
-            let rsiMax= 49;
+            let recentCandleCount = config.CRITERIA.rsi_recent_candles_watch_count;
+            let rsiMin = config.CRITERIA.rsi_recent_candles_low_range[0];
+            let rsiMax= config.CRITERIA.rsi_recent_candles_low_range[1];
             let recentRsiValues = rsiList.slice(-recentCandleCount);
             let withinWindow = recentRsiValues.map((rsiValue) => rsiValue >= rsiMin && rsiValue <= rsiMax);
             let allWithinWindow = withinWindow.indexOf(false) === -1;

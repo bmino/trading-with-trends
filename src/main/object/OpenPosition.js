@@ -11,7 +11,7 @@ function OpenPosition(ticker, candle, macd, rsi, stoch, time=new Date().getTime(
     self.stoch = stoch;
 
     self.condition = {
-        rsiBroke70: false
+        rsiMax: rsi
     };
 }
 
