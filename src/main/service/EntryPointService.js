@@ -27,7 +27,7 @@ let EntryPointService = {
                 macd_higher: true,
                 rsi_higher: true,
                 stoch_k_higher_d: true,
-                tema_higher_price: true
+                tema_higher_price: false
             },
             min_rsi: 50,
             stoch_blacklist: [
