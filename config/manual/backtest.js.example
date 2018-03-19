@@ -1,0 +1,8 @@
+let backtest = {
+    ticker: 'BTCUSDT',
+    interval: '1m',
+    endDate: new Date(2018, 4, 8, 15, 0, 0, 0),
+    limit: 5000
+};
+
+module.exports = backtest;
