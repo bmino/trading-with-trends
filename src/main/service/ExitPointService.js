@@ -24,10 +24,10 @@ let ExitPositionService = {
         CRITERIA: {
             failsafe_max_percent_loss: 1.5,
             failsafe_max_minutes_in_position: 60,
-            rsi_high_threshold_to_break_ceiling: 70,
+            rsi_high_threshold_to_break_ceiling: 100,
             rsi_low_threshold_after_breaking_ceiling: 50,
             rsi_floor_threshold: 40,
-            rsi_drop_threshold: 16,
+            rsi_drop_threshold: 25,
             rsi_recent_candles_watch_count: 3,
             rsi_recent_candles_low_range: [40,49]
         }
