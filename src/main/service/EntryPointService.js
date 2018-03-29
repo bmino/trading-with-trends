@@ -35,7 +35,8 @@ let EntryPointService = {
                 {k: [80,89], d: [80,89]},
                 {k: [80,84], d: [70,79]}
             ]
-        }
+        },
+        TESTING: true
     }
 };
 
@@ -53,6 +54,7 @@ function shouldEnter(candles, config=EntryPointService.CONFIG) {
             if (!crossovers) return false;
             let recentCrossover = crossovers[crossovers.length-1];
             let recentCandle = candles[candles.length-1];
+            if (!recentCrossover || !recentCandle) return false;
             if (recentCrossover.time !== recentCandle.time) return false;
             return shouldEnterFromCrossovers(crossovers, config);
         });

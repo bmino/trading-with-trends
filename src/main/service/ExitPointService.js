@@ -30,7 +30,8 @@ let ExitPositionService = {
             rsi_drop_threshold: 25,
             rsi_recent_candles_watch_count: 3,
             rsi_recent_candles_low_range: [40,49]
-        }
+        },
+        TESTING: true
     }
 
 };

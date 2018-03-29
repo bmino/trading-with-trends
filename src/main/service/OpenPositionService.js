@@ -57,18 +57,18 @@ function enterPosition(ticker, candles, configuration) {
     };
 
     console.log(`Entering ${ticker} at ${new Date(currentCandle.time).toString()}`);
-    // TODO: api call to place buy order
     return Promise.all([
+        configuration.TESTING ? Promise.resolve() : marketBuy(ticker, configuration.quantity),
         TechnicalAnalysisService.calculateMACD(configuration.MACD, closeValues),
         TechnicalAnalysisService.calculateRSI(configuration.RSI, closeValues),
         TechnicalAnalysisService.calculateSTOCH(configuration.STOCH, stochValues)
     ])
         .then((results) => {
-            let [calculatedMACD, calculatedRSI, calculatedSTOCH] = results;
+            let [order, calculatedMACD, calculatedRSI, calculatedSTOCH] = results;
             let currentMacd = calculatedMACD[calculatedMACD.length-1];
             let currentRsi = calculatedRSI[calculatedRSI.length-1];
             let currentStoch = calculatedSTOCH[calculatedSTOCH.length-1];
-            return Promise.resolve(OpenPositionService.POSITIONS[ticker] = new OpenPosition(ticker, currentCandle, currentMacd, currentRsi, currentStoch, currentCandle.time));
+            return Promise.resolve(OpenPositionService.POSITIONS[ticker] = new OpenPosition(ticker, configuration.quantity, currentCandle, currentMacd, currentRsi, currentStoch, currentCandle.time));
         });
 }
 
@@ -76,14 +76,16 @@ function exitPosition(ticker, candles, configuration) {
     let currentCandle = candles[candles.length-1];
     console.log(`Exiting ${ticker} at ${new Date(currentCandle.time).toString()}`);
 
-    // TODO: api call to place sell order
     let position = OpenPositionService.POSITIONS[ticker];
-    let profit = (currentCandle.close - position.candle.close) / currentCandle.close * 100;
-    OpenPositionService.HISTORY.PROFIT[ticker].push(profit);
-    console.log(`Profit: ${profit}%`);
+    return (configuration.TESTING ? Promise.resolve() : marketSell(ticker, position.quantity))
+        .then((response) => {
+            let profit = (currentCandle.close - position.candle.close) / currentCandle.close * 100;
+            OpenPositionService.HISTORY.PROFIT[ticker].push(profit);
+            console.log(`Profit: ${profit}%`);
 
-    delete OpenPositionService.POSITIONS[ticker];
-    return Promise.resolve(position);
+            delete OpenPositionService.POSITIONS[ticker];
+            return position
+        });
 }
 
 function updateCondition(ticker, condition, value) {
@@ -98,4 +100,22 @@ function calculateTotalProfit() {
     return Object.values(OpenPositionService.HISTORY.PROFIT)
         .reduce((flat, next) => flat.concat(next), [])
         .reduce((accumulator, currentValue) => accumulator + currentValue);
+}
+
+function marketBuy(ticker, quantity) {
+    return new Promise((resolve, reject) => {
+        binance.marketBuy(ticker, quantity, (error, response) => {
+            if (error) return reject(error);
+            return resolve(response);
+        });
+    });
+}
+
+function marketSell(ticker, quantity) {
+    return new Promise((resolve, reject) => {
+        binance.marketSell(ticker, quantity, (error, response) => {
+            if (error) return reject(error);
+            return resolve(response);
+        });
+    });
 }
