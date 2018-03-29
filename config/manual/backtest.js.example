@@ -1,5 +1,6 @@
 let backtest = {
     ticker: 'BTCUSDT',
+    quantity: 0.1,
     interval: '1m',
     endDate: new Date(2018, 4, 8, 15, 0, 0, 0),
     limit: 5000
