@@ -1,5 +1,12 @@
+require('dotenv').config({path: '../../../config/application.env'});
 const OpenPosition = require('../object/OpenPosition');
 const TechnicalAnalysisService = require('./TechnicalAnalysisService');
+const binance = require('node-binance-api');
+binance.options({
+    APIKEY: process.env.BINANCE_API_KEY,
+    APISECRET: process.env.BINANCE_API_SECRET,
+    test: process.env.BINANCE_API_TEST_MODE
+});
 
 let OpenPositionService = {
     POSITIONS: {},

@@ -1,3 +1,4 @@
+require('dotenv').config({path: '../../config/application.env'});
 const MarketDataService = require('../main/service/MarketDataService');
 const config = require('../../config/manual/monitorLive');
 
