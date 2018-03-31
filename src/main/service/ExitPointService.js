@@ -18,8 +18,14 @@ let ExitPositionService = {
             slowing: 3,
             d: 3
         },
+        EMA: {
+            period: 250
+        },
+        DEMA: {
+            period: 250
+        },
         TEMA: {
-            period: 200
+            period: 250
         },
         CRITERIA: {
             failsafe_max_percent_loss: 1.5,

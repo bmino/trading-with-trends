@@ -1,4 +1,4 @@
-function CrossoverObject(ticker, time, price, macd, rsi, stoch, tema) {
+function CrossoverObject(ticker, time, price, macd, rsi, stoch, ema, dema, tema) {
     let self = this;
     self.ticker = ticker;
     self.time = time;
@@ -6,6 +6,8 @@ function CrossoverObject(ticker, time, price, macd, rsi, stoch, tema) {
     self.macd = macd;
     self.rsi = rsi;
     self.stoch = stoch;
+    self.ema = ema;
+    self.dema = dema;
     self.tema = tema;
 }
 

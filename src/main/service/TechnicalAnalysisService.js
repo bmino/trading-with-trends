@@ -147,10 +147,12 @@ function calculatePositiveCrossovers(candlesticks, configurations) {
         TechnicalAnalysisService.calculateMACD(configurations.MACD, closeValues),
         TechnicalAnalysisService.calculateRSI(configurations.RSI, closeValues),
         TechnicalAnalysisService.calculateSTOCH(configurations.STOCH, stochValues),
+        TechnicalAnalysisService.calculateEMA(configurations.EMA, closeValues),
+        TechnicalAnalysisService.calculateDEMA(configurations.DEMA, closeValues),
         TechnicalAnalysisService.calculateTEMA(configurations.TEMA, closeValues)
     ])
         .then((results) => {
-            let [calculatedMACD, calculatedRSI, calculatedSTOCH, calculatedTEMA] = results;
+            let [calculatedMACD, calculatedRSI, calculatedSTOCH, calculatedEMA, calculatedDEMA, calculatedTEMA] = results;
 
             for (let offset=0; offset<candlesticks.length; offset++) {
                 let currentCandlestick = candlesticks[candlesticks.length - 1 - offset];
@@ -158,6 +160,8 @@ function calculatePositiveCrossovers(candlesticks, configurations) {
                 let previousMACD = calculatedMACD[calculatedMACD.length - 1 - 1 - offset];
                 let currentRSI = calculatedRSI[calculatedRSI.length - 1 - offset];
                 let currentSTOCH = calculatedSTOCH[calculatedSTOCH.length - 1 - offset];
+                let currentEMA = calculatedEMA[calculatedEMA.length - 1 - offset];
+                let currentDEMA = calculatedDEMA[calculatedDEMA.length - 1 - offset];
                 let currentTEMA = calculatedTEMA[calculatedTEMA.length - 1 - offset];
                 if (currentMACD === undefined || currentMACD.histogram === undefined) continue;
                 if (previousMACD === undefined || previousMACD.histogram === undefined) continue;
@@ -165,7 +169,7 @@ function calculatePositiveCrossovers(candlesticks, configurations) {
                 if (currentSTOCH === undefined) continue;
 
                 if (currentMACD.cross !== undefined && previousMACD.histogram < 0 && currentMACD.histogram >= 0) {
-                    crossoverObjects = [new CrossoverObject(currentCandlestick.ticker, currentCandlestick.time, currentCandlestick.close, currentMACD, currentRSI, currentSTOCH, currentTEMA)].concat(crossoverObjects);
+                    crossoverObjects = [new CrossoverObject(currentCandlestick.ticker, currentCandlestick.time, currentCandlestick.close, currentMACD, currentRSI, currentSTOCH, currentEMA, currentDEMA, currentTEMA)].concat(crossoverObjects);
                 }
             }
             return crossoverObjects;
@@ -191,10 +195,12 @@ function calculateNegativeCrossovers(candlesticks, configurations) {
         TechnicalAnalysisService.calculateMACD(configurations.MACD, closeValues),
         TechnicalAnalysisService.calculateRSI(configurations.RSI, closeValues),
         TechnicalAnalysisService.calculateSTOCH(configurations.STOCH, stochValues),
+        TechnicalAnalysisService.calculateEMA(configurations.EMA, closeValues),
+        TechnicalAnalysisService.calculateDEMA(configurations.DEMA, closeValues),
         TechnicalAnalysisService.calculateTEMA(configurations.TEMA, closeValues)
     ])
         .then((results) => {
-            let [calculatedMACD, calculatedRSI, calculatedSTOCH, calculatedTEMA] = results;
+            let [calculatedMACD, calculatedRSI, calculatedSTOCH, calculatedEMA, calculatedDEMA, calculatedTEMA] = results;
 
             for (let offset=0; offset<candlesticks.length; offset++) {
                 let currentCandlestick = candlesticks[candlesticks.length - 1 - offset];
@@ -202,6 +208,8 @@ function calculateNegativeCrossovers(candlesticks, configurations) {
                 let previousMACD = calculatedMACD[calculatedMACD.length - 1 - 1 - offset];
                 let currentRSI = calculatedRSI[calculatedRSI.length - 1 - offset];
                 let currentSTOCH = calculatedSTOCH[calculatedSTOCH.length - 1 - offset];
+                let currentEMA = calculatedEMA[calculatedEMA.length - 1 - offset];
+                let currentDEMA = calculatedDEMA[calculatedDEMA.length - 1 - offset];
                 let currentTEMA = calculatedTEMA[calculatedTEMA.length - 1 - offset];
                 if (currentMACD === undefined || currentMACD.histogram === undefined) continue;
                 if (previousMACD === undefined || previousMACD.histogram === undefined) continue;
@@ -209,7 +217,7 @@ function calculateNegativeCrossovers(candlesticks, configurations) {
                 if (currentSTOCH === undefined) continue;
 
                 if (currentMACD.cross !== undefined && previousMACD.histogram > 0 && currentMACD.histogram <= 0) {
-                    crossoverObjects = [new CrossoverObject(currentCandlestick.ticker, currentCandlestick.time, currentCandlestick.close, currentMACD, currentRSI, currentSTOCH, currentTEMA)].concat(crossoverObjects);
+                    crossoverObjects = [new CrossoverObject(currentCandlestick.ticker, currentCandlestick.time, currentCandlestick.close, currentMACD, currentRSI, currentSTOCH, currentEMA, currentDEMA, currentTEMA)].concat(crossoverObjects);
                 }
             }
             return crossoverObjects;
