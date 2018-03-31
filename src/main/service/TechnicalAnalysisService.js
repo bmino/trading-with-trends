@@ -3,6 +3,8 @@ const lineIntersect = require('line-intersect');
 const CrossoverObject = require('../object/CrossoverObject');
 
 let TechnicalAnalysisService = {
+    calculateEMA: calculateEMA,
+    calculateDEMA: calculateDEMA,
     calculateTEMA: calculateTEMA,
 
     calculateMACD: calculateMACD,
@@ -16,6 +18,34 @@ let TechnicalAnalysisService = {
 };
 
 module.exports = TechnicalAnalysisService;
+
+function calculateEMA(config, values) {
+    if (!config) throw 'No config given.';
+    if (!values) throw 'No values given.';
+    if (!config.period) throw 'No period value given.';
+
+    return tulind.indicators.ema.indicator([values], [config.period])
+        .then((calculations) => {
+            return calculations[0];
+        })
+        .catch((error) => {
+            throw error;
+        });
+}
+
+function calculateDEMA(config, values) {
+    if (!config) throw 'No config given.';
+    if (!values) throw 'No values given.';
+    if (!config.period) throw 'No period value given.';
+
+    return tulind.indicators.dema.indicator([values], [config.period])
+        .then((calculations) => {
+            return calculations[0];
+        })
+        .catch((error) => {
+            throw error;
+        });
+}
 
 function calculateTEMA(config, values) {
     if (!config) throw 'No config given.';
