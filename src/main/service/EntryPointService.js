@@ -32,8 +32,10 @@ let EntryPointService = {
             ENABLE: {
                 macd_higher: true,
                 rsi_higher: true,
-                stoch_k_higher_d: true,
-                tema_higher_price: false
+                stoch_k_above_d: true,
+                price_above_tema: true,
+                price_above_dema: true,
+                tema_above_ema: true
             },
             min_rsi: 50,
             stoch_blacklist: [
@@ -93,7 +95,7 @@ function shouldEnterFromCrossovers(crossovers, config) {
         verifyMACD(previousCrossover, currentCrossover, config);
         verifyRSI(previousCrossover, currentCrossover, config);
         verifySTOCH(currentCrossover, config);
-        verifyTEMA(currentCrossover, config);
+        verifyEMAS(currentCrossover, config);
     } catch (customError) {
         console.log(customError);
         return false;
@@ -119,7 +121,7 @@ function verifyRSI(previousCrossover, currentCrossover, config) {
 }
 
 function verifySTOCH(currentCrossover, config) {
-    if (config.CRITERIA.ENABLE.stoch_k_higher_d && !(currentCrossover.stoch.k > currentCrossover.stoch.d)) {
+    if (config.CRITERIA.ENABLE.stoch_k_above_d && !(currentCrossover.stoch.k > currentCrossover.stoch.d)) {
         throw `STOCH wasn\'t favorable, k:${currentCrossover.stoch.k} d:${currentCrossover.stoch.d}`;
     }
     config.CRITERIA.stoch_blacklist.forEach((blacklist) => {
@@ -129,9 +131,15 @@ function verifySTOCH(currentCrossover, config) {
     });
 }
 
-function verifyTEMA(currentCrossover, config) {
-    if (config.CRITERIA.ENABLE.tema_higher_price && (currentCrossover.tema > currentCrossover.price)) {
-        throw `TEMA was above price, ${currentCrossover.tema} > ${currentCrossover.price}`;
+function verifyEMAS(currentCrossover, config) {
+    if (config.CRITERIA.ENABLE.price_above_tema && !(currentCrossover.price > currentCrossover.tema)) {
+        throw `Price was below TEMA, ${currentCrossover.price} < ${currentCrossover.tema}`;
+    }
+    if (config.CRITERIA.ENABLE.price_above_dema && !(currentCrossover.price > currentCrossover.dema)) {
+        throw `TEMA was below DEMA, ${currentCrossover.price} < ${currentCrossover.dema}`;
+    }
+    if (config.CRITERIA.ENABLE.tema_above_ema && !(currentCrossover.tema > currentCrossover.ema)) {
+        throw `TEMA was below EMA, ${currentCrossover.tema} < ${currentCrossover.ema}`;
     }
 }
 
