@@ -3,17 +3,21 @@ const EntryPointService = require('./EntryPointService');
 const ExitPointService = require('./ExitPointService');
 const OpenPositionService = require('./OpenPositionService');
 const Candlestick = require('../object/Candlestick');
+const CandleBox = require('../object/CandleBox');
 
 let MarketDataService = {
     symbols: [],
     tickers: [],
     candles: {},
 
+    BACKTEST_LIMIT: 1000,
+
     init: init,
 
     watch: watch,
     backfill: backfill,
     getCandleHistory: getCandleHistory,
+    getCandleHistoryBox: getCandleHistoryBox,
 
     processTick: processTick,
     processCandlestick: processCandlestick
@@ -67,29 +71,30 @@ function processTick(tick) {
 
 function processCandlestick(candle) {
     let ticker = candle.ticker;
-    let candles = [];
+    let tempCandleBox = null;
 
-    let backFillPromise = containsNoCandles(ticker) ? backfill(ticker, candle.interval, candle.time, 500) : Promise.resolve();
+    let backFillPromise = containsNoCandles(ticker) ? backfill(ticker, candle.interval, candle.time) : Promise.resolve();
     addCandle(ticker, candle);
 
     return backFillPromise
         .then(() => {
-            candles = MarketDataService.candles[ticker].slice(0, MarketDataService.candles[ticker].indexOf(candle)+1);
-            return EntryPointService.shouldEnter(candles);
+            let currentCandles = MarketDataService.candles[ticker].slice(0, MarketDataService.candles[ticker].indexOf(candle)+1);
+            tempCandleBox = new CandleBox(MarketDataService.candles[ticker], currentCandles);
+            return EntryPointService.shouldEnter(tempCandleBox);
         })
         .then((shouldEnter) => {
-            if (shouldEnter) return OpenPositionService.enterPosition(ticker, candles, EntryPointService.CONFIG);
+            if (shouldEnter) return OpenPositionService.enterPosition(ticker, tempCandleBox, EntryPointService.CONFIG);
         })
         .then((openPosition) => {
-            if (!openPosition) return ExitPointService.shouldExit(candles);
+            if (!openPosition) return ExitPointService.shouldExit(tempCandleBox);
         })
         .then((shouldExit) => {
-            if (shouldExit) return OpenPositionService.exitPosition(ticker, candles, ExitPointService.CONFIG);
+            if (shouldExit) return OpenPositionService.exitPosition(ticker, tempCandleBox, ExitPointService.CONFIG);
         })
         .catch(console.error);
 }
 
-function backfill(ticker, interval, endTime, limit=500) {
+function backfill(ticker, interval, endTime, limit=MarketDataService.BACKTEST_LIMIT) {
     console.log(`Back filling ${limit} candlesticks for ${ticker} ...`);
 
     return getCandleHistory(ticker, interval, endTime, limit)
@@ -123,6 +128,20 @@ function getCandleHistory(ticker, interval, endTime, limit=500, candleShelf=[]) 
                 .catch(reject);
         }, options);
     });
+}
+
+function getCandleHistoryBox(ticker, interval, endTime, limit=500) {
+    let currentCandles = [];
+    return getCandleHistory(ticker, interval, endTime, limit)
+        .then((candles) => {
+            currentCandles = candles;
+            return getCandleHistory(ticker, interval, currentCandles[0].time - 1, MarketDataService.BACKTEST_LIMIT);
+        })
+        .then((backfilledCandles) => {
+            console.log(backfilledCandles[backfilledCandles.length - 1]);
+            console.log(currentCandles[0]);
+            return new CandleBox(backfilledCandles, currentCandles);
+        });
 }
 
 function clearCandles(ticker) {

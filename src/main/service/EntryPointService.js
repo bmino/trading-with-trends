@@ -49,27 +49,27 @@ let EntryPointService = {
 
 module.exports = EntryPointService;
 
-function shouldEnter(candles, config=EntryPointService.CONFIG) {
-    let ticker = candles[0].ticker;
+function shouldEnter(CandleBox, config=EntryPointService.CONFIG) {
+    let ticker = CandleBox.getTicker();
 
     if (OpenPositionService.getOpenPosition(ticker)) {
         return Promise.resolve(false);
     }
 
-    return TechnicalAnalysisService.calculatePositiveCrossovers(candles, config)
+    return TechnicalAnalysisService.calculatePositiveCrossovers(CandleBox, config)
         .then((crossovers) => {
             if (!crossovers) return false;
             let recentCrossover = crossovers[crossovers.length-1];
-            let recentCandle = candles[candles.length-1];
+            let recentCandle = CandleBox.getLastCandle();
             if (!recentCrossover || !recentCandle) return false;
             if (recentCrossover.time !== recentCandle.time) return false;
             return shouldEnterFromCrossovers(crossovers, config);
         });
 }
 
-function historicalEntryPoints(candles, config=EntryPointService.CONFIG) {
-    console.log(`Calculating entry points for ${candles[0].ticker} from ${new Date(candles[0].time)} - ${new Date(candles[candles.length-1].time)}`);
-    return TechnicalAnalysisService.calculatePositiveCrossovers(candles, config)
+function historicalEntryPoints(CandleBox, config=EntryPointService.CONFIG) {
+    console.log(`\nCalculating entry points for ${CandleBox.getTicker()} from ${new Date(CandleBox.getCurrent()[0].time)} - ${new Date(CandleBox.getLastCandle().time)}`);
+    return TechnicalAnalysisService.calculatePositiveCrossovers(CandleBox, config)
         .then((crossovers) => {
             let historyEntryCrossovers = crossovers.filter((crossover) => {
                 return shouldEnterFromCrossovers(crossovers.slice(0, crossovers.indexOf(crossover)+1), config);

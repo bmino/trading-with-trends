@@ -45,27 +45,27 @@ let ExitPositionService = {
 module.exports = ExitPositionService;
 
 
-function shouldExit(candles, config=ExitPositionService.CONFIG) {
-    let ticker = candles[0].ticker;
+function shouldExit(CandleBox, config=ExitPositionService.CONFIG) {
+    let ticker = CandleBox.getTicker();
 
     if (!OpenPositionService.getOpenPosition(ticker)) {
         return Promise.resolve(false);
     }
 
-    return detectFailSafe(ticker, candles, config)
+    return detectFailSafe(ticker, CandleBox, config)
         .then((detectedFailsafe) => {
             if (detectedFailsafe) return Promise.resolve(detectedFailsafe);
-            return detectExitReason(ticker, candles, config);
+            return detectExitReason(ticker, CandleBox, config);
         })
         .catch(console.error);
 }
 
-function detectFailSafe(ticker, candles, config) {
+function detectFailSafe(ticker, CandleBox, config) {
     let max_minutes = config.CRITERIA.failsafe_max_minutes_in_position;
     let MAX_MILLISECONDS = max_minutes * 60 * 1000;
     let openPosition = OpenPositionService.getOpenPosition(ticker);
-    let currentCandle = candles[candles.length-1];
-    let profit = candles[candles.length - 1].close - openPosition.candle.close;
+    let currentCandle = CandleBox.getLastCandle();
+    let profit = currentCandle.close - openPosition.candle.close;
     let profitPercent = profit / openPosition.candle.close * 100;
 
     if (profitPercent < (-1 * config.CRITERIA.failsafe_max_percent_loss)) {
@@ -81,11 +81,11 @@ function detectFailSafe(ticker, candles, config) {
     return Promise.resolve(false);
 }
 
-function detectExitReason(ticker, candles, config) {
+function detectExitReason(ticker, CandleBox, config) {
     return Promise.all([
-        exitBecauseMacdCrossedBack(ticker, candles, config),
-        exitBecauseRsiDropped(ticker, candles, config),
-        exitBecauseRecentCandlesHaveLowRsi(ticker, candles, config)
+        exitBecauseMacdCrossedBack(ticker, CandleBox, config),
+        exitBecauseRsiDropped(ticker, CandleBox, config),
+        exitBecauseRecentCandlesHaveLowRsi(ticker, CandleBox, config)
     ])
         .then((results) => {
             return Promise.resolve(results.indexOf(true) >= 0);
@@ -93,11 +93,11 @@ function detectExitReason(ticker, candles, config) {
         .catch(console.error);
 }
 
-function exitBecauseMacdCrossedBack(ticker, candles, config) {
-    return TechnicalAnalysisService.calculateNegativeCrossovers(candles, config)
+function exitBecauseMacdCrossedBack(ticker, CandleBox, config) {
+    return TechnicalAnalysisService.calculateNegativeCrossovers(CandleBox, config)
         .then((crossovers) => {
             let recentCrossover = crossovers[crossovers.length-1];
-            let recentCandle = candles[candles.length-1];
+            let recentCandle = CandleBox.getLastCandle();
             if (recentCrossover.time === recentCandle.time) {
                 console.log(`MACD crossed back`);
                 return Promise.resolve(true);
@@ -106,8 +106,8 @@ function exitBecauseMacdCrossedBack(ticker, candles, config) {
         });
 }
 
-function exitBecauseRsiDropped(ticker, candles, config) {
-    let closeValues = candles.map((candle) => {return candle.close;});
+function exitBecauseRsiDropped(ticker, CandleBox, config) {
+    let closeValues = CandleBox.getAll().map((candle) => {return candle.close;});
     return TechnicalAnalysisService.calculateRSI(config.RSI, closeValues)
         .then((rsiList) => {
             let previousRSI = rsiList[rsiList.length-2];
@@ -137,10 +137,10 @@ function exitBecauseRsiDropped(ticker, candles, config) {
         });
 }
 
-function exitBecauseRecentCandlesHaveLowRsi(ticker, candles, config) {
-    if (!candles[candles.length-1].final) return Promise.resolve(false);
+function exitBecauseRecentCandlesHaveLowRsi(ticker, CandleBox, config) {
+    if (!CandleBox.getLastCandle().final) return Promise.resolve(false);
 
-    let closeValues = candles.map((candle) => {return candle.close;});
+    let closeValues = CandleBox.getAll().map((candle) => {return candle.close;});
     return TechnicalAnalysisService.calculateRSI(config.RSI, closeValues)
         .then((rsiList) => {
             let recentCandleCount = config.CRITERIA.rsi_recent_candles_watch_count;

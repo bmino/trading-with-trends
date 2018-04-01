@@ -131,10 +131,11 @@ function calculateSTOCH(config, values) {
         });
 }
 
-function calculatePositiveCrossovers(candlesticks, configurations) {
-    let closeValues = candlesticks.map((candle) => candle.close);
-    let lowValues = candlesticks.map((candle) => candle.low);
-    let highValues = candlesticks.map((candle) => candle.high);
+function calculatePositiveCrossovers(CandleBox, configurations) {
+    let closeValues = CandleBox.getAll().map((candle) => candle.close);
+    let lowValues = CandleBox.getAll().map((candle) => candle.low);
+    let highValues = CandleBox.getAll().map((candle) => candle.high);
+    let currentCandlesticks = CandleBox.getCurrent();
 
     let crossoverObjects = [];
     let stochValues = {
@@ -154,8 +155,8 @@ function calculatePositiveCrossovers(candlesticks, configurations) {
         .then((results) => {
             let [calculatedMACD, calculatedRSI, calculatedSTOCH, calculatedEMA, calculatedDEMA, calculatedTEMA] = results;
 
-            for (let offset=0; offset<candlesticks.length; offset++) {
-                let currentCandlestick = candlesticks[candlesticks.length - 1 - offset];
+            for (let offset=0; offset<currentCandlesticks.length; offset++) {
+                let currentCandlestick = currentCandlesticks[currentCandlesticks.length - 1 - offset];
                 let currentMACD = calculatedMACD[calculatedMACD.length - 1 - offset];
                 let previousMACD = calculatedMACD[calculatedMACD.length - 1 - 1 - offset];
                 let currentRSI = calculatedRSI[calculatedRSI.length - 1 - offset];
@@ -179,10 +180,11 @@ function calculatePositiveCrossovers(candlesticks, configurations) {
         });
 }
 
-function calculateNegativeCrossovers(candlesticks, configurations) {
-    let closeValues = candlesticks.map((candle) => {return candle.close;});
-    let lowValues = candlesticks.map((candle) => {return candle.low;});
-    let highValues = candlesticks.map((candle) => {return candle.high;});
+function calculateNegativeCrossovers(CandleBox, configurations) {
+    let closeValues = CandleBox.getAll().map((candle) => candle.close);
+    let lowValues = CandleBox.getAll().map((candle) => candle.low);
+    let highValues = CandleBox.getAll().map((candle) => candle.high);
+    let currentCandlesticks = CandleBox.getCurrent();
 
     let crossoverObjects = [];
     let stochValues = {
@@ -202,8 +204,8 @@ function calculateNegativeCrossovers(candlesticks, configurations) {
         .then((results) => {
             let [calculatedMACD, calculatedRSI, calculatedSTOCH, calculatedEMA, calculatedDEMA, calculatedTEMA] = results;
 
-            for (let offset=0; offset<candlesticks.length; offset++) {
-                let currentCandlestick = candlesticks[candlesticks.length - 1 - offset];
+            for (let offset=0; offset<currentCandlesticks.length; offset++) {
+                let currentCandlestick = currentCandlesticks[currentCandlesticks.length - 1 - offset];
                 let currentMACD = calculatedMACD[calculatedMACD.length - 1 - offset];
                 let previousMACD = calculatedMACD[calculatedMACD.length - 1 - 1 - offset];
                 let currentRSI = calculatedRSI[calculatedRSI.length - 1 - offset];

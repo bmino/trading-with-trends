@@ -44,15 +44,15 @@ function getOpenPositions() {
     return Object.values(OpenPositionService.POSITIONS).map((position) => position.candle.ticker);
 }
 
-function enterPosition(ticker, candles, configuration) {
+function enterPosition(ticker, CandleBox, configuration) {
     if (getOpenPosition(ticker)) return Promise.reject(`Position already open for ${ticker}`);
     if (!OpenPositionService.HISTORY.PROFIT[ticker]) OpenPositionService.HISTORY.PROFIT[ticker] = [];
 
-    let currentCandle = candles[candles.length-1];
-    let closeValues = candles.map((candle) => candle.close);
+    let currentCandle = CandleBox.getLastCandle();
+    let closeValues = CandleBox.getAll().map((candle) => candle.close);
     let stochValues = {
-        highValues: candles.map((candle) => candle.high),
-        lowValues: candles.map((candle) => candle.low),
+        highValues: CandleBox.getAll().map((candle) => candle.high),
+        lowValues: CandleBox.getAll().map((candle) => candle.low),
         closeValues: closeValues
     };
 
@@ -72,8 +72,8 @@ function enterPosition(ticker, candles, configuration) {
         });
 }
 
-function exitPosition(ticker, candles, configuration) {
-    let currentCandle = candles[candles.length-1];
+function exitPosition(ticker, CandleBox, configuration) {
+    let currentCandle = CandleBox.getLastCandle();
     console.log(`Exiting ${ticker} at ${new Date(currentCandle.time).toString()}`);
 
     let position = OpenPositionService.POSITIONS[ticker];
