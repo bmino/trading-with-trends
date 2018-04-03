@@ -105,7 +105,7 @@ function calculateTotalProfit() {
 function marketBuy(ticker, quantity) {
     return new Promise((resolve, reject) => {
         binance.marketBuy(ticker, quantity, (error, response) => {
-            if (error) return reject(error);
+            if (error) return reject(JSON.parse(error.body).msg);
             return resolve(response);
         });
     });
@@ -114,7 +114,7 @@ function marketBuy(ticker, quantity) {
 function marketSell(ticker, quantity) {
     return new Promise((resolve, reject) => {
         binance.marketSell(ticker, quantity, (error, response) => {
-            if (error) return reject(error);
+            if (error) return reject(JSON.parse(error.body).msg);
             return resolve(response);
         });
     });
