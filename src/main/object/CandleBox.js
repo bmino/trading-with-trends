@@ -4,7 +4,7 @@ function CandleBox(backfilled, current) {
     self.current = current;
 
     self.getTicker = () => {
-        return self.current[0].ticker;
+        return (self.current[0] || self.backfilled[0]).ticker;
     };
 
     self.getLastCandle = () => {
