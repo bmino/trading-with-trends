@@ -1,4 +1,5 @@
 require('dotenv').config({path: '../../../config/application.env'});
+const liveConfiguration = require('../../../config/manual/monitorLive');
 const OpenPosition = require('../object/OpenPosition');
 const TechnicalAnalysisService = require('./TechnicalAnalysisService');
 const binance = require('node-binance-api');
@@ -55,10 +56,12 @@ function enterPosition(ticker, CandleBox, configuration) {
         lowValues: CandleBox.getAll().map((candle) => candle.low),
         closeValues: closeValues
     };
+    let quantity = liveConfiguration.tickers[ticker] ? liveConfiguration.tickers[ticker].quantity : undefined;
+    if (!quantity && !configuration.TESTING) throw `Quantity must be set for ${ticker}`;
 
     console.log(`Entering ${ticker} at ${new Date(currentCandle.time).toString()}`);
     return Promise.all([
-        configuration.TESTING ? Promise.resolve() : marketBuy(ticker, configuration.quantity),
+        configuration.TESTING ? Promise.resolve() : marketBuy(ticker, quantity),
         TechnicalAnalysisService.calculateMACD(configuration.MACD, closeValues),
         TechnicalAnalysisService.calculateRSI(configuration.RSI, closeValues),
         TechnicalAnalysisService.calculateSTOCH(configuration.STOCH, stochValues)
@@ -68,7 +71,7 @@ function enterPosition(ticker, CandleBox, configuration) {
             let currentMacd = calculatedMACD[calculatedMACD.length-1];
             let currentRsi = calculatedRSI[calculatedRSI.length-1];
             let currentStoch = calculatedSTOCH[calculatedSTOCH.length-1];
-            return Promise.resolve(OpenPositionService.POSITIONS[ticker] = new OpenPosition(ticker, configuration.quantity, currentCandle, currentMacd, currentRsi, currentStoch, currentCandle.time));
+            return Promise.resolve(OpenPositionService.POSITIONS[ticker] = new OpenPosition(ticker, quantity, currentCandle, currentMacd, currentRsi, currentStoch, currentCandle.time));
         });
 }
 

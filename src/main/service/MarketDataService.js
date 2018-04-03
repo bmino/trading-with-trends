@@ -55,10 +55,10 @@ function init() {
 
 function watch(tickers, interval='1m') {
     if (!tickers) throw 'No tickers provided';
-    if (typeof tickers === 'string') tickers = [tickers];
-    tickers.forEach(clearCandles);
-    console.log(`Opening websocket connection for ${tickers} ...`);
-    binance.websockets.candlesticks(tickers, interval, processTick);
+    let tickerNames = Object.keys(tickers);
+    tickerNames.forEach(clearCandles);
+    console.log(`Opening websocket connection for ${tickerNames} ...`);
+    binance.websockets.candlesticks(tickerNames, interval, processTick);
 }
 
 function processTick(tick) {
