@@ -44,8 +44,7 @@ let EntryPointService = {
                 {k: [80,89], d: [80,89]},
                 {k: [80,84], d: [70,79]}
             ]
-        },
-        TESTING: true
+        }
     }
 };
 

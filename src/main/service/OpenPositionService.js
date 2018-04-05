@@ -5,8 +5,7 @@ const TechnicalAnalysisService = require('./TechnicalAnalysisService');
 const binance = require('node-binance-api');
 binance.options({
     APIKEY: process.env.BINANCE_API_KEY,
-    APISECRET: process.env.BINANCE_API_SECRET,
-    test: process.env.BINANCE_API_TEST_MODE
+    APISECRET: process.env.BINANCE_API_SECRET
 });
 
 let OpenPositionService = {
@@ -57,11 +56,10 @@ function enterPosition(ticker, CandleBox, configuration) {
         closeValues: closeValues
     };
     let quantity = liveConfiguration.tickers[ticker] ? liveConfiguration.tickers[ticker].quantity : undefined;
-    if (!quantity && !configuration.TESTING) throw `Quantity must be set for ${ticker}`;
+    if (!quantity && process.env.LIVE_TRADING) throw `Quantity must be set for ${ticker}`;
 
-    console.log(`Entering ${ticker} at ${new Date(currentCandle.time).toString()}`);
     return Promise.all([
-        configuration.TESTING ? Promise.resolve() : marketBuy(ticker, quantity),
+        process.env.LIVE_TRADING ? marketBuy(ticker, quantity) : console.log(`Would enter ${ticker} at ${new Date(currentCandle.time).toString()}`),
         TechnicalAnalysisService.calculateMACD(configuration.MACD, closeValues),
         TechnicalAnalysisService.calculateRSI(configuration.RSI, closeValues),
         TechnicalAnalysisService.calculateSTOCH(configuration.STOCH, stochValues)
@@ -77,10 +75,11 @@ function enterPosition(ticker, CandleBox, configuration) {
 
 function exitPosition(ticker, CandleBox, configuration) {
     let currentCandle = CandleBox.getLastCandle();
-    console.log(`Exiting ${ticker} at ${new Date(currentCandle.time).toString()}`);
-
     let position = OpenPositionService.POSITIONS[ticker];
-    return (configuration.TESTING ? Promise.resolve() : marketSell(ticker, position.quantity))
+
+    return Promise.all([
+        process.env.LIVE_TRADING ? marketSell(ticker, position.quantity) : console.log(`Would exit ${ticker} at ${new Date(currentCandle.time).toString()}`)
+    ])
         .then((response) => {
             let profit = (currentCandle.close - position.candle.close) / currentCandle.close * 100;
             OpenPositionService.HISTORY.PROFIT[ticker].push(profit);
@@ -106,6 +105,7 @@ function calculateTotalProfit() {
 }
 
 function marketBuy(ticker, quantity) {
+    console.log(`${new Date().toString()} - Executing market buy of ${quantity} ${ticker}`);
     return new Promise((resolve, reject) => {
         binance.marketBuy(ticker, quantity, (error, response) => {
             if (error) return reject(JSON.parse(error.body).msg);
@@ -115,6 +115,7 @@ function marketBuy(ticker, quantity) {
 }
 
 function marketSell(ticker, quantity) {
+    console.log(`${new Date().toString()} - Executing market sell of ${quantity} ${ticker}`);
     return new Promise((resolve, reject) => {
         binance.marketSell(ticker, quantity, (error, response) => {
             if (error) return reject(JSON.parse(error.body).msg);
