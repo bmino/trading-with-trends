@@ -37,6 +37,7 @@ let EntryPointService = {
                 price_above_dema: true,
                 tema_above_ema: true
             },
+            entry_seconds: [50,59],
             min_rsi: 50,
             stoch_blacklist: [
                 {k: [90,99], d: [90,99]},
@@ -64,6 +65,7 @@ function shouldEnter(CandleBox, config=EntryPointService.CONFIG) {
             let recentCandle = CandleBox.getLastCandle();
             if (!recentCrossover || !recentCandle) return false;
             if (recentCrossover.time !== recentCandle.time) return false;
+            if (!recentCandle.final && !inRange(new Date(recentCandle.time).getSeconds(), EntryPointService.CONFIG.CRITERIA.entry_seconds[0], EntryPointService.CONFIG.CRITERIA.entry_seconds[1])) return false;
             return shouldEnterFromCrossovers(crossovers, config);
         });
 }
