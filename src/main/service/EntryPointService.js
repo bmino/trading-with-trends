@@ -92,7 +92,7 @@ function shouldEnterFromCrossovers(crossovers, config) {
     try {
         let currentCrossover = crossovers[crossovers.length-1];
         let previousCrossover = crossovers[crossovers.length-2];
-        console.log(`\nChecking crossover at ${new Date(currentCrossover.time).toString()}`);
+        console.log(`\nChecking ${currentCrossover.ticker} crossover at ${new Date(currentCrossover.time).toString()}`);
         verifyMACD(previousCrossover, currentCrossover, config);
         verifyRSI(previousCrossover, currentCrossover, config);
         verifySTOCH(currentCrossover, config);

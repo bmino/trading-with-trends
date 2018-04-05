@@ -45,8 +45,9 @@ function init() {
                 return self.indexOf(sym) === index;
             });
 
-            console.log(`Found ${MarketDataService.symbols.length} symbols`);
-            console.log(`Found ${MarketDataService.tickers.length} tickers`);
+            console.log(`\tFound ${MarketDataService.symbols.length} symbols`);
+            console.log(`\tFound ${MarketDataService.tickers.length} tickers`);
+            console.log();
 
             return resolve();
         });
@@ -95,13 +96,13 @@ function processCandlestick(candle) {
 }
 
 function backfill(ticker, interval, endTime, limit=MarketDataService.BACKTEST_LIMIT) {
-    console.log(`Back filling ${limit} candlesticks for ${ticker} ...`);
+    console.log(`\nBack filling ${limit} candlesticks for ${ticker} ...`);
 
     return getCandleHistory(ticker, interval, endTime, limit)
         .then((backfilledCandles) => {
             backfilledCandles = removeOutdatedCandles(backfilledCandles);
             addCandlesToBeginning(ticker, backfilledCandles);
-            console.log(`Back filled ${backfilledCandles.length} ${ticker} candles`);
+            console.log(`Back filled ${backfilledCandles.length} ${ticker} candles\n`);
             return backfilledCandles;
         })
         .catch(console.error);
