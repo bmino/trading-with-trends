@@ -2,6 +2,7 @@ require('dotenv').config({path: '../../../config/application.env'});
 const liveConfiguration = require('../../../config/manual/monitorLive');
 const OpenPosition = require('../object/OpenPosition');
 const TechnicalAnalysisService = require('./TechnicalAnalysisService');
+const MailerService = require('./MailerService');
 const binance = require('node-binance-api');
 binance.options({
     APIKEY: process.env.BINANCE_API_KEY,
@@ -85,6 +86,7 @@ function exitPosition(ticker, CandleBox, configuration) {
             let profit = (currentCandle.close - position.candle.close) / currentCandle.close * 100;
             OpenPositionService.HISTORY.PROFIT[ticker].push(profit);
             console.log(`Profit: ${profit}%`);
+            if (process.env.NOTIFICATION_FOR_PROFIT) MailerService.sendEmail('Profit Report', `Profit of ${profit} recorded for ${ticker}`, process.env.NOTIFICATION_EMAIL_ADDRESS);
 
             delete OpenPositionService.POSITIONS[ticker];
             return position
@@ -110,6 +112,7 @@ function marketBuy(ticker, quantity) {
     return new Promise((resolve, reject) => {
         binance.marketBuy(ticker, quantity, (error, response) => {
             if (error) return reject(JSON.parse(error.body).msg);
+            if (process.env.NOTIFICATION_FOR_BUY) MailerService.sendEmail('Successful Buy', `Executed market buy of ${quantity} ${ticker}`, process.env.NOTIFICATION_EMAIL_ADDRESS);
             return resolve(response);
         });
     });
@@ -120,6 +123,7 @@ function marketSell(ticker, quantity) {
     return new Promise((resolve, reject) => {
         binance.marketSell(ticker, quantity, (error, response) => {
             if (error) return reject(JSON.parse(error.body).msg);
+            if (process.env.NOTIFICATION_FOR_SELL) MailerService.sendEmail('Successful Sell', `Executed market sell of ${quantity} ${ticker}`, process.env.NOTIFICATION_EMAIL_ADDRESS);
             return resolve(response);
         });
     });

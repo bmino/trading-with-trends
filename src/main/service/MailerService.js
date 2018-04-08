@@ -2,19 +2,17 @@ require('dotenv').config({path: '../../../config/application.env'});
 let nodemailer = require('nodemailer');
 let xoauth2 = require('xoauth2');
 
-
 let MailerService = {
-
     sendEmail: sendEmail,
 
     transporter : nodemailer.createTransport("SMTP", {
         service: 'gmail',
         auth: {
             XOAuth2: {
-                user: process.env.EMAIL_ADDRESS,
-                clientId: process.env.AUTH_CLIENT_ID,
-                clientSecret: process.env.AUTH_CLIENT_SECRET,
-                refreshToken: process.env.AUTH_CLIENT_REFRESH
+                user: process.env.MAIL_AUTH_CLIENT_USER,
+                clientId: process.env.MAIL_AUTH_CLIENT_ID,
+                clientSecret: process.env.MAIL_AUTH_CLIENT_SECRET,
+                refreshToken: process.env.MAIL_AUTH_CLIENT_REFRESH
             }
         }
     })
@@ -31,7 +29,7 @@ function sendEmail(subject, message, address) {
     return new Promise(function(resolve, reject) {
         let mailOptions = {
             to: address,
-            from: `${process.env.EMAIL_TITLE} <${process.env.EMAIL_ADDRESS}>`,
+            from: `Trading With Trends <${process.env.MAIL_AUTH_CLIENT_USER}>`,
             subject: subject,
             text: message
         };
@@ -46,9 +44,9 @@ function sendEmail(subject, message, address) {
 }
 
 function validTransport() {
-    return (process.env.EMAIL_TITLE &&
-            process.env.EMAIL_ADDRESS &&
-            process.env.AUTH_CLIENT_ID &&
-            process.env.AUTH_CLIENT_SECRET &&
-            process.env.AUTH_CLIENT_REFRESH);
+    return (process.env.NOTIFICATION_EMAIL_ADDRESS &&
+            process.env.MAIL_AUTH_CLIENT_USER &&
+            process.env.MAIL_AUTH_CLIENT_ID &&
+            process.env.MAIL_AUTH_CLIENT_SECRET &&
+            process.env.MAIL_AUTH_CLIENT_REFRESH);
 }
