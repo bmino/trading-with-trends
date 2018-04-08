@@ -5,7 +5,8 @@ const TechnicalAnalysisService = require('./TechnicalAnalysisService');
 const binance = require('node-binance-api');
 binance.options({
     APIKEY: process.env.BINANCE_API_KEY,
-    APISECRET: process.env.BINANCE_API_SECRET
+    APISECRET: process.env.BINANCE_API_SECRET,
+    useServerTime: true
 });
 
 let OpenPositionService = {
