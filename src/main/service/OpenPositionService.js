@@ -48,6 +48,7 @@ function getOpenPositions() {
 
 function enterPosition(ticker, CandleBox, configuration) {
     if (getOpenPosition(ticker)) return Promise.reject(`Position already open for ${ticker}`);
+    OpenPositionService.POSITIONS[ticker] = 'PLACEHOLDER';
 
     let currentCandle = CandleBox.getLastCandle();
     let closeValues = CandleBox.getAll().map((candle) => candle.close);
@@ -77,6 +78,7 @@ function enterPosition(ticker, CandleBox, configuration) {
 function exitPosition(ticker, CandleBox, configuration) {
     let currentCandle = CandleBox.getLastCandle();
     let position = OpenPositionService.POSITIONS[ticker];
+    delete OpenPositionService.POSITIONS[ticker];
 
     return Promise.all([
         process.env.LIVE_TRADING ? marketSell(ticker, position.quantity) : console.log(`Would exit ${ticker} at ${new Date(currentCandle.time).toString()}`)
@@ -85,10 +87,8 @@ function exitPosition(ticker, CandleBox, configuration) {
             let profit = (currentCandle.close - position.candle.close) / currentCandle.close * 100;
             if (!OpenPositionService.HISTORY.PROFIT[ticker]) OpenPositionService.HISTORY.PROFIT[ticker] = [];
             OpenPositionService.HISTORY.PROFIT[ticker].push(profit);
-            console.log(`Profit: ${profit}%`);
+            console.log(`${ticker} profit: ${profit}%`);
             if (process.env.NOTIFICATION_FOR_PROFIT) MailerService.sendEmail('Profit Report', `Profit of ${profit} recorded for ${ticker}`, process.env.NOTIFICATION_EMAIL_ADDRESS);
-
-            delete OpenPositionService.POSITIONS[ticker];
             return position
         });
 }
