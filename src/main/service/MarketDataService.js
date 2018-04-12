@@ -72,17 +72,12 @@ function processTick(tick) {
 
 function processCandlestick(candle) {
     let ticker = candle.ticker;
-    let tempCandleBox = null;
-
-    let backFillPromise = containsNoCandles(ticker) ? backfill(ticker, candle.interval, candle.time) : Promise.resolve();
     addCandle(ticker, candle);
 
-    return backFillPromise
-        .then(() => {
-            let currentCandles = MarketDataService.candles[ticker].slice(0, MarketDataService.candles[ticker].indexOf(candle)+1);
-            tempCandleBox = new CandleBox(MarketDataService.candles[ticker], currentCandles);
-            return EntryPointService.shouldEnter(tempCandleBox);
-        })
+    if (containsXCandles(ticker, 1)) return backfill(ticker, candle.interval, candle.time);
+
+    let tempCandleBox = new CandleBox([], MarketDataService.candles[ticker].slice(0));
+    return EntryPointService.shouldEnter(tempCandleBox)
         .then((shouldEnter) => {
             if (shouldEnter) return OpenPositionService.enterPosition(ticker, tempCandleBox, EntryPointService.CONFIG);
         })
@@ -152,6 +147,11 @@ function clearCandles(ticker) {
 function containsNoCandles(ticker) {
     if (!MarketDataService.candles[ticker]) return true;
     return MarketDataService.candles[ticker].length === 0;
+}
+
+function containsXCandles(ticker, count) {
+    if (!MarketDataService.candles[ticker]) return false;
+    return MarketDataService.candles[ticker].length === count;
 }
 
 function getLastCandle(ticker) {
