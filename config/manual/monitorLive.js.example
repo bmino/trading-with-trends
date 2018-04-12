@@ -8,7 +8,8 @@ let monitorLive = {
     notifications: {
         buy: true,
         sell: true,
-        profit: true
+        profit: true,
+        totalProfit: true
     }
 };
 
