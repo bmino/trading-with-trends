@@ -9,6 +9,7 @@ process.env.LIVE_TRADING = true;
 process.env.NOTIFICATION_FOR_BUY = config.notifications.buy;
 process.env.NOTIFICATION_FOR_SELL = config.notifications.sell;
 process.env.NOTIFICATION_FOR_PROFIT = config.notifications.profit;
+process.env.NOTIFICATION_FOR_TOTAL_PROFIT = config.notifications.totalProfit;
 
 MarketDataService.init()
     .then(() => {

@@ -89,7 +89,8 @@ function exitPosition(ticker, CandleBox, configuration) {
             OpenPositionService.HISTORY.PROFIT[ticker].push(profit);
             console.log(`${ticker} profit: ${profit}%`);
             if (process.env.NOTIFICATION_FOR_PROFIT) MailerService.sendEmail('Profit Report', `Profit of ${profit} recorded for ${ticker}`, process.env.NOTIFICATION_EMAIL_ADDRESS);
-            return position
+            if (process.env.NOTIFICATION_FOR_TOTAL_PROFIT) MailerService.sendEmail('Total Profit Report', `Total profit of ${calculateTotalProfit()}`, process.env.NOTIFICATION_EMAIL_ADDRESS);
+            return position;
         });
 }
 
