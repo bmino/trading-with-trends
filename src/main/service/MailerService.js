@@ -22,7 +22,7 @@ module.exports = MailerService;
 
 
 function sendEmail(subject, message, address) {
-    console.log(`Trying to send email to ${address}`);
+    console.log(`Trying to send "${subject}" message to ${address}`);
 
     if (!validTransport()) return Promise.reject(new Error('Invalid mail transport'));
 
@@ -36,7 +36,7 @@ function sendEmail(subject, message, address) {
 
         MailerService.transporter.sendMail(mailOptions, function(error, response) {
             if (error) return reject(error);
-            console.log(`Message sent to ${address}`);
+            console.log(`"${subject}" message sent to ${address}`);
             return resolve('Message sent successfully');
         });
     });
