@@ -16,6 +16,8 @@ let OpenPositionService = {
         PROFIT: {},
     },
 
+    PROFIT_PRECISION: 5,
+
     reset: reset,
 
     getOpenPosition: getOpenPosition,
@@ -88,8 +90,8 @@ function exitPosition(ticker, CandleBox, configuration) {
             if (!OpenPositionService.HISTORY.PROFIT[ticker]) OpenPositionService.HISTORY.PROFIT[ticker] = [];
             OpenPositionService.HISTORY.PROFIT[ticker].push(profit);
             console.log(`${ticker} profit: ${profit}%`);
-            if (process.env.NOTIFICATION_FOR_PROFIT) MailerService.sendEmail('Profit Report', `Profit of ${profit} recorded for ${ticker}`, process.env.NOTIFICATION_EMAIL_ADDRESS);
-            if (process.env.NOTIFICATION_FOR_TOTAL_PROFIT) MailerService.sendEmail('Total Profit Report', `Total profit of ${calculateTotalProfit()}`, process.env.NOTIFICATION_EMAIL_ADDRESS);
+            if (process.env.NOTIFICATION_FOR_PROFIT) MailerService.sendEmail('Profit Report', `Profit of ${profit.toFixed(OpenPositionService.PROFIT_PRECISION)}% recorded for ${ticker}`, process.env.NOTIFICATION_EMAIL_ADDRESS);
+            if (process.env.NOTIFICATION_FOR_TOTAL_PROFIT) MailerService.sendEmail('Total Profit Report', `Total profit of ${calculateTotalProfit().toFixed(OpenPositionService.PROFIT_PRECISION)}%`, process.env.NOTIFICATION_EMAIL_ADDRESS);
             return position;
         });
 }
