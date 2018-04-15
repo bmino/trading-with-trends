@@ -8,7 +8,9 @@ MarketDataService.getCandleHistory(config.ticker, config.interval, config.endDat
     .then(() => {
         console.log(`\n\nResults:`);
         console.log(`Position Profits:`);
-        console.log(OpenPositionService.HISTORY.PROFIT[config.ticker].map((p) => p.toFixed(4) + '%'));
+        if (OpenPositionService.HISTORY.PROFIT[config.ticker]) {
+            console.log(OpenPositionService.HISTORY.PROFIT[config.ticker].map((p) => p.toFixed(4) + '%'));
+        }
         console.log(`\nTotal Profit: ${OpenPositionService.calculateTotalProfit()}%`);
     })
     .catch(console.error);

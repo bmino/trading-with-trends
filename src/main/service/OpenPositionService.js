@@ -101,13 +101,14 @@ function updateCondition(ticker, condition, value) {
 }
 
 function calculateProfit(ticker) {
+    if (!OpenPositionService.HISTORY.PROFIT[ticker]) return 0;
     return OpenPositionService.HISTORY.PROFIT[ticker].reduce((accumulator, currentValue) => accumulator + currentValue);
 }
 
 function calculateTotalProfit() {
     return Object.values(OpenPositionService.HISTORY.PROFIT)
-        .reduce((flat, next) => flat.concat(next), [])
-        .reduce((accumulator, currentValue) => accumulator + currentValue);
+        .reduce((accumulator, profits) => accumulator.concat(profits), [], 0)
+        .reduce((accumulator, profit) => accumulator + profit, 0);
 }
 
 function marketBuy(ticker, quantity) {
