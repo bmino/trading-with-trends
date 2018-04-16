@@ -46,12 +46,12 @@ module.exports = ExitPositionService;
 
 function shouldExit(CandleBox, config=ExitPositionService.CONFIG) {
     let ticker = CandleBox.getTicker();
+    let OpenPosition = OpenPositionService.getOpenPosition(ticker);
 
-    if (!OpenPositionService.getOpenPosition(ticker)) {
-        return Promise.resolve(false);
-    }
+    if (!OpenPosition) return Promise.resolve(false);
+    if (!CandleBox.getLastCandle()) return Promise.resolve(false);
 
-    return detectFailSafe(ticker, CandleBox, config)
+    return detectFailSafe(OpenPosition, CandleBox, config)
         .then((detectedFailsafe) => {
             if (detectedFailsafe) return Promise.resolve(detectedFailsafe);
             return detectExitReason(ticker, CandleBox, config);
@@ -59,20 +59,19 @@ function shouldExit(CandleBox, config=ExitPositionService.CONFIG) {
         .catch(console.error);
 }
 
-function detectFailSafe(ticker, CandleBox, config) {
+function detectFailSafe(OpenPosition, CandleBox, config) {
     let max_minutes = config.CRITERIA.failsafe_max_minutes_in_position;
     let MAX_MILLISECONDS = max_minutes * 60 * 1000;
-    let openPosition = OpenPositionService.getOpenPosition(ticker);
     let currentCandle = CandleBox.getLastCandle();
-    let profit = currentCandle.close - openPosition.candle.close;
-    let profitPercent = profit / openPosition.candle.close * 100;
+    let profit = currentCandle.close - OpenPosition.candle.close;
+    let profitPercent = profit / OpenPosition.candle.close * 100;
 
     if (profitPercent < (-1 * config.CRITERIA.failsafe_max_percent_loss)) {
         console.log(`Failsafe triggered, loss of ${profitPercent}%`);
         return Promise.resolve(true);
     }
 
-    if (new Date(currentCandle.time).getTime() - openPosition.time > MAX_MILLISECONDS) {
+    if (new Date(currentCandle.time).getTime() - OpenPosition.time > MAX_MILLISECONDS) {
         console.log(`Failsafe triggered, open time beyond ${max_minutes} minutes`);
         return Promise.resolve(true);
     }
