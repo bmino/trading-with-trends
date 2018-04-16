@@ -1,7 +1,7 @@
 let monitorLive = {
     tickers: {
-        'BTCUSDT': {quantity: 0.001},
-        'ETHUSDT': {quantity: 0.01}
+        'ADABTC': {quantity: 40},
+        'ETHBTC': {quantity: 0.02}
     },
     interval: '1m',
 

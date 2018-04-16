@@ -1,9 +1,9 @@
 let backtest = {
-    ticker: 'BTCUSDT',
+    ticker: 'XVGBTC',
     quantity: 0.1,
     interval: '1m',
-    endDate: new Date(2018, 4, 8, 15, 0, 0, 0),
-    limit: 5000
+    endDate: new Date(2018, 5, 15, 2, 0, 0, 0),
+    limit: 1440
 };
 
 module.exports = backtest;
