@@ -64,9 +64,9 @@ function watch(tickers, interval='1m') {
 
 function processTick(tick) {
     let {E: eventTime, s: ticker, k: candle} = tick;
-    let {o: open, c: close, h: high, l: low, y: volume, n: trades, x: final, i: interval} = candle;
+    let {o: open, c: close, h: high, l: low, v: baseVolume, q: quoteVolume, n: trades, x: final, i: interval} = candle;
 
-    let candlestick = new Candlestick(ticker, eventTime, interval, open, close, high, low, volume, trades, final);
+    let candlestick = new Candlestick(ticker, eventTime, interval, open, close, high, low, baseVolume, quoteVolume, trades, final);
     return processCandlestick(candlestick);
 }
 
@@ -117,7 +117,7 @@ function getCandleHistory(ticker, interval, endTime, limit=500, candleShelf=[]) 
             if (error) return reject(error);
             candleShelf = ticks.map(tick => {
                 let [time, open, high, low, close, volume, closeTime, assetVolume, trades, buyBaseVolume, buyAssetVolume, ignored] = tick;
-                return new Candlestick(symbol, time, interval, open, close, high, low, volume, trades, true, true);
+                return new Candlestick(symbol, time, interval, open, close, high, low, volume, assetVolume, trades, true, true);
             }).concat(candleShelf);
             return getCandleHistory(ticker, interval, candleShelf[0].time-1, limit-=500, candleShelf)
                 .then(resolve)
@@ -134,8 +134,6 @@ function getCandleHistoryBox(ticker, interval, endTime, limit=500) {
             return getCandleHistory(ticker, interval, currentCandles[0].time - 1, MarketDataService.BACKTEST_LIMIT);
         })
         .then((backfilledCandles) => {
-            console.log(backfilledCandles[backfilledCandles.length - 1]);
-            console.log(currentCandles[0]);
             return new CandleBox(backfilledCandles, currentCandles);
         });
 }
