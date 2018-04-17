@@ -17,6 +17,7 @@ let OpenPositionService = {
     },
 
     PROFIT_PRECISION: 5,
+    TRADE_PERCENT_FEE: process.env.TRADE_PERCENT_FEE || 0.05,
 
     reset: reset,
 
@@ -86,7 +87,7 @@ function exitPosition(ticker, CandleBox, configuration) {
         process.env.LIVE_TRADING ? marketSell(ticker, position.quantity) : console.log(`Would exit ${ticker} at ${new Date(currentCandle.time).toString()}`)
     ])
         .then((response) => {
-            let profit = (currentCandle.close - position.candle.close) / currentCandle.close * 100;
+            let profit = (currentCandle.close - position.candle.close) / currentCandle.close * 100 - (2 * OpenPositionService.TRADE_PERCENT_FEE);
             if (!OpenPositionService.HISTORY.PROFIT[ticker]) OpenPositionService.HISTORY.PROFIT[ticker] = [];
             OpenPositionService.HISTORY.PROFIT[ticker].push(profit);
             console.log(`${ticker} profit: ${profit}%`);
