@@ -46,7 +46,8 @@ let EntryPointService = {
             ],
             VOLUME: {
                 period: 30,
-                threshold: (6000 / 24 / 2)
+                min: (6000 / 24 / 2),
+                max: undefined
             }
         }
     }
@@ -152,7 +153,7 @@ function verifyEMAS(currentCrossover, config) {
 }
 
 function verifyVolume(candles, config) {
-    if (!config.CRITERIA.VOLUME || !config.CRITERIA.VOLUME.period || !config.CRITERIA.VOLUME.threshold) return;
+    if (!config.CRITERIA.VOLUME || !config.CRITERIA.VOLUME.period) return;
     if (candles[0].ticker.slice(-3).toUpperCase() !== 'BTC') {
         console.error(`Volume checks for quote assets other than BTC are not yet supported`);
         return;
@@ -164,8 +165,12 @@ function verifyVolume(candles, config) {
         throw `Volume could not be calculated with given history periods, found ${relevantCandles.length} / ${config.CRITERIA.VOLUME.period}`;
     }
 
-    if (volume < config.CRITERIA.VOLUME.threshold) {
-        throw `Volume was below threshold, ${volume} < ${config.CRITERIA.VOLUME.threshold}`;
+    if (config.CRITERIA.VOLUME.min && volume < config.CRITERIA.VOLUME.min) {
+        throw `Volume was below min threshold, ${volume} < ${config.CRITERIA.VOLUME.min}`;
+    }
+
+    if (config.CRITERIA.VOLUME.max && volume > config.CRITERIA.VOLUME.max) {
+        throw `Volume was above max threshold, ${volume} > ${config.CRITERIA.VOLUME.max}`;
     }
 }
 
