@@ -63,8 +63,7 @@ function detectFailSafe(OpenPosition, CandleBox, config) {
     let max_minutes = config.CRITERIA.failsafe_max_minutes_in_position;
     let MAX_MILLISECONDS = max_minutes * 60 * 1000;
     let currentCandle = CandleBox.getLastCandle();
-    let profit = currentCandle.close - OpenPosition.candle.close;
-    let profitPercent = profit / OpenPosition.candle.close * 100;
+    let profitPercent = (currentCandle.close - OpenPosition.candle.close) / OpenPosition.candle.close * 100;
 
     if (profitPercent < (-1 * config.CRITERIA.failsafe_max_percent_loss)) {
         console.log(`Failsafe triggered, loss of ${profitPercent}%`);
