@@ -10,18 +10,10 @@
     "live": "node src/manual/MonitorLive.js"
   },
   "dependencies": {
-    "body-parser": "~1.18.2",
-    "cookie-parser": "~1.4.3",
-    "debug": "~2.6.9",
     "dotenv": "^5.0.1",
-    "ejs": "~2.5.7",
-    "express": "~4.15.5",
     "line-intersect": "^1.0.0",
-    "morgan": "~1.9.0",
-    "node-binance-api": "^0.4.6",
+    "node-binance-api": "^0.4.29",
     "nodemailer": "^0.7.1",
-    "serve-favicon": "~2.4.5",
-    "socket.io": "^2.0.4",
     "tulind": "^0.8.9",
     "xoauth2": "^1.2.0"
   }
