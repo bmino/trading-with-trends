@@ -175,5 +175,6 @@ function verifyVolume(candles, config) {
 }
 
 function inRange(number, low, high) {
+    if (low === undefined || high === undefined) return false;
     return number >= low && number <= high;
 }
