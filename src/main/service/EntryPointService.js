@@ -33,6 +33,7 @@ let EntryPointService = {
                 macd_higher: true,
                 rsi_higher: true,
                 stoch_k_above_d: true,
+                price_lower: false,
                 price_above_tema: true,
                 price_above_dema: true,
                 tema_above_ema: true
@@ -101,6 +102,7 @@ function shouldEnterFromCrossovers(crossovers, candles, config) {
         let previousCrossover = crossovers[crossovers.length-2];
         console.log(`\nChecking ${currentCrossover.ticker} crossover at ${new Date(currentCrossover.time).toString()}`);
         verifyVolume(candles, config);
+        verifyPrice(previousCrossover, currentCrossover, config);
         verifyMACD(previousCrossover, currentCrossover, config);
         verifyRSI(previousCrossover, currentCrossover, config);
         verifySTOCH(currentCrossover, config);
@@ -113,6 +115,12 @@ function shouldEnterFromCrossovers(crossovers, candles, config) {
     return true;
 }
 
+
+function verifyPrice(previousCrossover, currentCrossover, config) {
+    if (config.CRITERIA.ENABLE.price_lower && !(currentCrossover.price < previousCrossover.price)) {
+        throw `Crossover price wasn\'t lower than previous crossover, ${previousCrossover.price} -> ${currentCrossover.price}`;
+    }
+}
 
 function verifyMACD(previousCrossover, currentCrossover, config) {
     if (config.CRITERIA.ENABLE.macd_higher && !(currentCrossover.macd.cross > previousCrossover.macd.cross)) {
