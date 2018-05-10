@@ -35,10 +35,11 @@ let EntryPointService = {
                 stoch_k_above_d: true,
                 price_lower: false,
                 price_above_tema: true,
-                price_above_dema: true,
-                tema_above_ema: true
+                price_above_dema: false,
+                price_above_ema: false,
+                tema_above_ema: false
             },
-            entry_seconds: [50,59],
+            entry_seconds: [undefined],
             min_rsi: 50,
             stoch_blacklist: [
                 {k: [90,99], d: [90,99]},
@@ -154,6 +155,9 @@ function verifyEMAS(currentCrossover, config) {
     }
     if (config.CRITERIA.ENABLE.price_above_dema && !(currentCrossover.price > currentCrossover.dema)) {
         throw `Price was below DEMA, ${currentCrossover.price} < ${currentCrossover.dema}`;
+    }
+    if (config.CRITERIA.ENABLE.price_above_ema && !(currentCrossover.price > currentCrossover.ema)) {
+        throw `Price was below EMA, ${currentCrossover.price} < ${currentCrossover.ema}`;
     }
     if (config.CRITERIA.ENABLE.tema_above_ema && !(currentCrossover.tema > currentCrossover.ema)) {
         throw `TEMA was below EMA, ${currentCrossover.tema} < ${currentCrossover.ema}`;
