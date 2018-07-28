@@ -7,7 +7,9 @@
     "npm": "6.0.0"
   },
   "scripts": {
-    "live": "node src/manual/MonitorLive.js"
+    "start": "node src/manual/MonitorLive.js",
+    "backtest": "node src/manual/Backtest.js",
+    "entries": "node src/manual/EntryPoints.js"
   },
   "dependencies": {
     "dotenv": "^5.0.1",
