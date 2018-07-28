@@ -1,4 +1,4 @@
-const binance = require('node-binance-api');
+const binance = require('node-binance-api')();
 const EntryPointService = require('./EntryPointService');
 const ExitPointService = require('./ExitPointService');
 const OpenPositionService = require('./OpenPositionService');

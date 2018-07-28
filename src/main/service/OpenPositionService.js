@@ -3,7 +3,7 @@ const LIVE_CONFIG = require('../../../config/manual/monitorLive');
 const OpenPosition = require('../object/OpenPosition');
 const TechnicalAnalysisService = require('./TechnicalAnalysisService');
 const MailerService = require('./MailerService');
-const binance = require('node-binance-api');
+const binance = require('node-binance-api')();
 binance.options({
     APIKEY: CONFIG.BINANCE_API_KEY,
     APISECRET: CONFIG.BINANCE_API_SECRET,
