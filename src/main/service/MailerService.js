@@ -1,4 +1,4 @@
-require('dotenv').config({path: '../../../config/application.env'});
+const CONFIG = require('../../../config/application.js');
 let nodemailer = require('nodemailer');
 let xoauth2 = require('xoauth2');
 
@@ -9,10 +9,10 @@ let MailerService = {
         service: 'gmail',
         auth: {
             XOAuth2: {
-                user: process.env.MAIL_AUTH_CLIENT_USER,
-                clientId: process.env.MAIL_AUTH_CLIENT_ID,
-                clientSecret: process.env.MAIL_AUTH_CLIENT_SECRET,
-                refreshToken: process.env.MAIL_AUTH_CLIENT_REFRESH
+                user: CONFIG.MAIL_AUTH_CLIENT_USER,
+                clientId: CONFIG.MAIL_AUTH_CLIENT_ID,
+                clientSecret: CONFIG.MAIL_AUTH_CLIENT_SECRET,
+                refreshToken: CONFIG.MAIL_AUTH_CLIENT_REFRESH
             }
         }
     })
@@ -27,7 +27,7 @@ function sendEmail(subject, message, address) {
     return new Promise(function(resolve, reject) {
         let mailOptions = {
             to: address,
-            from: `Trading With Trends <${process.env.MAIL_AUTH_CLIENT_USER}>`,
+            from: `Trading With Trends <${CONFIG.MAIL_AUTH_CLIENT_USER}>`,
             subject: subject,
             text: message
         };
@@ -41,9 +41,9 @@ function sendEmail(subject, message, address) {
 }
 
 function validTransport() {
-    return (process.env.NOTIFICATION_EMAIL_ADDRESS &&
-            process.env.MAIL_AUTH_CLIENT_USER &&
-            process.env.MAIL_AUTH_CLIENT_ID &&
-            process.env.MAIL_AUTH_CLIENT_SECRET &&
-            process.env.MAIL_AUTH_CLIENT_REFRESH);
+    return (CONFIG.NOTIFICATION_EMAIL_ADDRESS &&
+            CONFIG.MAIL_AUTH_CLIENT_USER &&
+            CONFIG.MAIL_AUTH_CLIENT_ID &&
+            CONFIG.MAIL_AUTH_CLIENT_SECRET &&
+            CONFIG.MAIL_AUTH_CLIENT_REFRESH);
 }

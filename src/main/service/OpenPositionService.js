@@ -1,12 +1,12 @@
-require('dotenv').config({path: '../../../config/application.env'});
-const liveConfiguration = require('../../../config/manual/monitorLive');
+const CONFIG = require('../../../config/application.js');
+const LIVE_CONFIG = require('../../../config/manual/monitorLive');
 const OpenPosition = require('../object/OpenPosition');
 const TechnicalAnalysisService = require('./TechnicalAnalysisService');
 const MailerService = require('./MailerService');
 const binance = require('node-binance-api');
 binance.options({
-    APIKEY: process.env.BINANCE_API_KEY,
-    APISECRET: process.env.BINANCE_API_SECRET,
+    APIKEY: CONFIG.BINANCE_API_KEY,
+    APISECRET: CONFIG.BINANCE_API_SECRET,
     useServerTime: true
 });
 
@@ -60,7 +60,7 @@ function enterPosition(ticker, CandleBox, configuration) {
         lowValues: CandleBox.getAll().map((candle) => candle.low),
         closeValues: closeValues
     };
-    let quantity = liveConfiguration.tickers[ticker] ? liveConfiguration.tickers[ticker].quantity : undefined;
+    let quantity = LIVE_CONFIG.tickers[ticker] ? LIVE_CONFIG.tickers[ticker].quantity : undefined;
     if (!quantity && process.env.LIVE_TRADING) throw `Quantity must be set for ${ticker}`;
 
     return Promise.all([
@@ -91,8 +91,8 @@ function exitPosition(ticker, CandleBox, configuration) {
             if (!OpenPositionService.HISTORY.PROFIT[ticker]) OpenPositionService.HISTORY.PROFIT[ticker] = [];
             OpenPositionService.HISTORY.PROFIT[ticker].push(profit);
             console.log(`${ticker} profit: ${profit}%`);
-            if (process.env.NOTIFICATION_FOR_PROFIT) MailerService.sendEmail('Profit Report', `Profit of ${profit.toFixed(OpenPositionService.PROFIT_PRECISION)}% recorded for ${ticker}`, process.env.NOTIFICATION_EMAIL_ADDRESS);
-            if (process.env.NOTIFICATION_FOR_TOTAL_PROFIT) MailerService.sendEmail('Total Profit Report', `Total profit of ${calculateTotalProfit().toFixed(OpenPositionService.PROFIT_PRECISION)}%`, process.env.NOTIFICATION_EMAIL_ADDRESS);
+            if (process.env.LIVE_CONFIG && LIVE_CONFIG.notifications.profit) MailerService.sendEmail('Profit Report', `Profit of ${profit.toFixed(OpenPositionService.PROFIT_PRECISION)}% recorded for ${ticker}`, process.env.NOTIFICATION_EMAIL_ADDRESS);
+            if (process.env.LIVE_CONFIG && LIVE_CONFIG.notifications.totalProfit) MailerService.sendEmail('Total Profit Report', `Total profit of ${calculateTotalProfit().toFixed(OpenPositionService.PROFIT_PRECISION)}%`, process.env.NOTIFICATION_EMAIL_ADDRESS);
             return position;
         });
 }
@@ -117,7 +117,7 @@ function marketBuy(ticker, quantity) {
     return new Promise((resolve, reject) => {
         binance.marketBuy(ticker, quantity, (error, response) => {
             if (error) return reject(JSON.parse(error.body).msg);
-            if (process.env.NOTIFICATION_FOR_BUY) MailerService.sendEmail('Successful Buy', `Executed market buy of ${quantity} ${ticker}`, process.env.NOTIFICATION_EMAIL_ADDRESS);
+            if (process.env.LIVE_TRADING && LIVE_CONFIG.notifications.buy) MailerService.sendEmail('Successful Buy', `Executed market buy of ${quantity} ${ticker}`, process.env.NOTIFICATION_EMAIL_ADDRESS);
             return resolve(response);
         });
     });
@@ -128,7 +128,7 @@ function marketSell(ticker, quantity) {
     return new Promise((resolve, reject) => {
         binance.marketSell(ticker, quantity, (error, response) => {
             if (error) return reject(JSON.parse(error.body).msg);
-            if (process.env.NOTIFICATION_FOR_SELL) MailerService.sendEmail('Successful Sell', `Executed market sell of ${quantity} ${ticker}`, process.env.NOTIFICATION_EMAIL_ADDRESS);
+            if (process.env.LIVE_TRADING && LIVE_CONFIG.notifications.sell) MailerService.sendEmail('Successful Sell', `Executed market sell of ${quantity} ${ticker}`, process.env.NOTIFICATION_EMAIL_ADDRESS);
             return resolve(response);
         });
     });
