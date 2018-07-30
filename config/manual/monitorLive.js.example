@@ -1,4 +1,4 @@
-let monitorLive = {
+module.exports = {
     tickers: {
         'ADABTC': {quantity: 40},
         'ETHBTC': {quantity: 0.02}
@@ -12,5 +12,3 @@ let monitorLive = {
         totalProfit: true
     }
 };
-
-module.exports = monitorLive;

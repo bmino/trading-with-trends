@@ -1,9 +1,9 @@
-let backtest = {
-    ticker: 'XVGBTC',
-    quantity: 0.1,
+module.exports = {
+    ticker: 'ONTBTC',
     interval: '1m',
-    endDate: new Date(2018, 5, 15, 2, 0, 0, 0),
+    // Month index begins at 0
+    // Therefore: Jan=0, Feb=1, Mar=2, Apr=3
+    // Format is (year, month, day, hour, minute)
+    endDate: new Date(2018, 2, 26, 23, 0),
     limit: 1440
 };
-
-module.exports = backtest;
