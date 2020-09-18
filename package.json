@@ -13,10 +13,10 @@
     "entries": "node src/manual/EntryPoints.js"
   },
   "dependencies": {
-    "line-intersect": "^1.0.0",
-    "node-binance-api": "^0.8.1",
+    "line-intersect": "^2.2.4",
+    "node-binance-api": "^0.12.0",
     "nodemailer": "^0.7.1",
-    "tulind": "^0.8.10",
+    "tulind": "^0.8.18",
     "xoauth2": "^1.2.0"
   }
 }
